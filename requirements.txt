@@ -1,2 +1,9 @@
 dbt-core==1.8.0 
 dbt-snowflake==1.8.0
+snowflake-snowpark-python
+streamlit
+pandas
+numpy
+plotly
+scikit-learn
+snowflake-connector-python
