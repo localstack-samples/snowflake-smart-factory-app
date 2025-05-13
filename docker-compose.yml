@@ -1,0 +1,15 @@
+services:
+  localstack:
+    container_name: "localstack-snowflake"
+    image: localstack/snowflake:latest
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
+      - "127.0.0.1:443:443"
+    environment:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?}
+      - DEBUG=1
+      - DOCKER_FLAGS='-e SF_LOG=trace'
+    volumes:
+      - "./volume:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"

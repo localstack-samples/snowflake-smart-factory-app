@@ -1,0 +1,6 @@
+name: 'factory_pipeline_dbt'
+version: '1.0.0'
+config-version: 2
+profile: 'localstack'
+model-paths: ["models"]
+test-paths: ["tests"]

@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: PROCESSED_MACHINE_HEALTH # This refers to the Snowflake table your Snowpark SP populates
+    config:
+      materialized: ephemeral # Tells dbt not to build this table, just know it exists for testing
+
+    columns:
+      - name: machine_id
+        description: "The unique identifier for the machine."
+        tests:
+          - not_null # Ensures machine_id is never empty
+
+      - name: health_status
+        description: "The calculated health status of the machine."
+        tests:
+          - not_null # Ensures health_status is never empty
+          - accepted_values: # Ensures health_status is one of these specific values
+              values: ['HEALTHY', 'NEEDS_MAINTENANCE', 'CRITICAL']
+              # This is the test that will fail when your buggy Snowpark SP produces
+              # 'BUGGED_STATUS_NEEDS_FIX' or 'HEALTHY_BUT_REALLY_OK'
+
+      - name: failure_risk_score
+        description: "A score indicating the risk of failure."
+        tests:
+          - not_null # Ensures failure_risk_score is never empty
+          # TODO: custom test using a dbt_utils macro.
+          # Add dbt_utils (add to packages.yml):
+          #  - package: dbt-labs/dbt_utils
+          #    version: [">=1.0.0", "<2.0.0"]
+          # Then use:
+          # - dbt_utils.expression_is_true:
+          #     expression: ">= 0 AND <= 1"

@@ -1,0 +1,15 @@
+localstack:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: test
+      user: test
+      password: test
+      role: test
+      database: FACTORY_PIPELINE_DEMO
+      schema: PUBLIC
+      threads: 1
+      # For LocalStack, you need to specify host and port
+      host: snowflake.localhost.localstack.cloud
+      port: 4566
