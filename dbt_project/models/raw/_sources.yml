@@ -1,0 +1,41 @@
+version: 2
+
+sources:
+  - name: factory
+    database: FACTORY_PIPELINE_DEMO
+    schema: public
+    tables:
+      - name: raw_sensor_data
+        description: "Raw sensor readings from factory machines"
+        columns:
+          - name: machine_id
+            description: "Identifier for the machine being monitored"
+            tests:
+              - not_null
+          - name: timestamp
+            description: "Timestamp when the reading was taken"
+            tests:
+              - not_null
+          - name: temperature
+            description: "Temperature reading from the sensor"
+            tests:
+              - not_null
+          - name: vibration
+            description: "Vibration reading from the sensor"
+            tests:
+              - not_null
+          - name: pressure
+            description: "Pressure reading from the sensor"
+            tests:
+              - not_null
+          - name: status_code
+            description: "Status code from the sensor"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['AOK', 'WARN', 'CRIT']
+          - name: _loaded_at
+            description: "Timestamp when the record was loaded"
+          - name: _file_name
+            description: "Source file name" 
+            description: "Source file name" 

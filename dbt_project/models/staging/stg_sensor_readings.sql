@@ -1,20 +1,62 @@
 -- models/staging/stg_sensor_readings.sql
-WITH raw_data AS (
-    -- If using dbt sources.yml: SELECT * FROM {{ source('factory_raw', 'raw_sensor_data') }}
-    -- For direct table reference, including database and schema:
-    SELECT * FROM {{ var('db_name', 'FACTORY_PIPELINE_DEMO') }}.PUBLIC.RAW_SENSOR_DATA
+{{
+    config(
+        materialized='view',
+        schema='staging',
+        alias='sensor_readings_view'
+    )
+}}
+
+WITH source AS (
+    SELECT * FROM {{ ref('raw_sensor_data') }}
+),
+
+validated AS (
+    SELECT
+        machine_id,
+        timestamp as event_time,
+        -- Validate temperature readings
+        CASE 
+            WHEN temperature < 0 OR temperature > 150 THEN NULL  -- Invalid temperature range
+            ELSE temperature
+        END AS avg_temperature,
+        
+        -- Validate vibration readings
+        CASE 
+            WHEN vibration < 0 OR vibration > 2.0 THEN NULL  -- Invalid vibration range
+            ELSE vibration
+        END AS max_vibration,
+        
+        -- Convert status code to signal strength
+        CASE
+            WHEN status_code = 'AOK' THEN 100
+            WHEN status_code = 'WARN' THEN 60
+            WHEN status_code = 'CRIT' THEN 20
+            ELSE 0
+        END AS signal_strength,
+        
+        -- Flag potentially anomalous readings
+        CASE 
+            WHEN temperature > {{ var('sensor_reading_threshold') }} 
+                OR vibration > 1.0 
+                OR status_code = 'CRIT' THEN TRUE
+            ELSE FALSE
+        END AS is_anomalous
+    FROM source
+),
+
+final AS (
+    SELECT 
+        *,
+        -- Add reading status based on validation
+        CASE 
+            WHEN avg_temperature IS NULL OR max_vibration IS NULL THEN 'invalid'
+            WHEN is_anomalous THEN 'anomalous'
+            ELSE 'normal'
+        END AS reading_status
+    FROM validated
+    WHERE avg_temperature IS NOT NULL 
+        AND max_vibration IS NOT NULL  -- Filter out invalid readings
 )
-SELECT
-    machine_id,
-    timestamp AS event_time,
-    temperature AS avg_temperature, -- Keeping it simple, could be AVG() over a window for true staging
-    vibration AS max_vibration,     -- Could be MAX() over a window for true staging
-    CASE
-        WHEN status_code = 'AOK' THEN 100
-        WHEN status_code = 'WARN' THEN 60
-        WHEN status_code = 'CRIT' THEN 20
-        ELSE 0
-    END AS signal_strength, -- Example derived metric
-    (pressure - 100) * 10 AS pressure_anomaly_score -- Example moderate transformation
-FROM raw_data
-WHERE temperature IS NOT NULL AND vibration IS NOT NULL -- Basic data quality filter
+
+SELECT * FROM final

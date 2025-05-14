@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: processed_machine_health
+    description: "Final processed machine health metrics"
+    columns:
+      - name: machine_id
+        description: "Unique identifier for the machine"
+        tests:
+          - unique
+          - not_null
+      
+      - name: temperature_health_score
+        description: "Health score based on temperature readings"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              
+      - name: vibration_health_score
+        description: "Health score based on vibration readings"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              
+      - name: pressure_health_score
+        description: "Health score based on pressure readings"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              
+      - name: noise_health_score
+        description: "Health score based on noise readings"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              
+      - name: overall_health_score
+        description: "Overall machine health score"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100 
