@@ -10,38 +10,58 @@ models:
           - unique
           - not_null
       
-      - name: temperature_health_score
-        description: "Health score based on temperature readings"
+      - name: last_reading_time
+        description: "Timestamp of the last sensor reading"
         tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 100
-              
-      - name: vibration_health_score
-        description: "Health score based on vibration readings"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 100
-              
-      - name: pressure_health_score
-        description: "Health score based on pressure readings"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 100
-              
-      - name: noise_health_score
-        description: "Health score based on noise readings"
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 100
-              
-      - name: overall_health_score
-        description: "Overall machine health score"
+          - not_null
+          
+      - name: total_readings
+        description: "Total number of readings for the machine"
         tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 0
-              max_value: 100 
+              
+      - name: anomalous_readings
+        description: "Count of anomalous readings"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              
+      - name: avg_temperature
+        description: "Average temperature reading"
+        tests:
+          - not_null
+              
+      - name: max_vibration
+        description: "Maximum vibration reading"
+        tests:
+          - not_null
+              
+      - name: min_signal_strength
+        description: "Minimum signal strength"
+        tests:
+          - not_null
+
+      - name: failure_risk_score
+        description: "Calculated risk score for machine failure (0-100)"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              
+      - name: health_status
+        description: "Current health status of the machine"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['HEALTHY', 'NEEDS_MAINTENANCE', 'CRITICAL']
+              
+      - name: maintenance_recommendation
+        description: "Recommended maintenance action"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['No action needed', 'Schedule maintenance within 48 hours', 'Immediate maintenance required'] 

@@ -5,8 +5,8 @@ import plotly.express as px
 def load_machine_health_data(conn):
     """Load machine health data from Snowflake"""
     try:
-        # Get the data using SQL query
-        query = "SELECT * FROM PROCESSED_MACHINE_HEALTH"
+        # Get the data using SQL query with correct schema name
+        query = "SELECT * FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics"
         
         # Execute query using Snowflake cursor
         cur = conn.cursor()
@@ -40,8 +40,8 @@ def load_machine_health_data(conn):
 def load_sensor_data(conn):
     """Load recent sensor data from Snowflake"""
     try:
-        # Get the data using SQL query
-        query = "SELECT * FROM RAW_SENSOR_DATA"
+        # Get the data using SQL query with correct schema name
+        query = "SELECT * FROM FACTORY_PIPELINE_DEMO.PUBLIC.RAW_SENSOR_DATA ORDER BY timestamp DESC LIMIT 1000"
         
         # Execute query using Snowflake cursor
         cur = conn.cursor()

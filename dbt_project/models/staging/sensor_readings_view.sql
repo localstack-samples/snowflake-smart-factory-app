@@ -1,4 +1,4 @@
--- models/staging/stg_sensor_readings.sql
+-- models/staging/sensor_readings_view.sql
 {{
     config(
         materialized='view',
@@ -59,4 +59,4 @@ final AS (
         AND max_vibration IS NOT NULL  -- Filter out invalid readings
 )
 
-SELECT * FROM final
+SELECT * FROM final 
