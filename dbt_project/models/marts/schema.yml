@@ -26,23 +26,30 @@ models:
         description: "Count of anomalous readings"
         tests:
           - not_null
-          - dbt_utils.accepted_range:
-              min_value: 0
               
       - name: avg_temperature
         description: "Average temperature reading"
         tests:
           - not_null
+          - dbt_utils.accepted_range:
+              min_value: -50
+              max_value: 150
               
       - name: max_vibration
         description: "Maximum vibration reading"
         tests:
           - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
               
       - name: min_signal_strength
         description: "Minimum signal strength"
         tests:
           - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
 
       - name: failure_risk_score
         description: "Calculated risk score for machine failure (0-100)"

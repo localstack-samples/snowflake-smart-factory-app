@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: sensor_readings_view
+    description: "Cleaned and validated sensor readings"
+    columns:
+      - name: machine_id
+        description: "Unique identifier for the machine"
+        tests:
+          - not_null
+      
+      - name: event_time
+        description: "Timestamp of the sensor reading"
+        tests:
+          - not_null
+              
+      - name: avg_temperature
+        description: "Average temperature reading in Celsius"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: -50
+              max_value: 150
+              
+      - name: max_vibration
+        description: "Maximum vibration reading"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              
+      - name: pressure
+        description: "Pressure reading in PSI"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 500
+              
+      - name: reading_status
+        description: "Status of the sensor reading"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['normal', 'anomalous', 'invalid']
+              
+      - name: signal_strength
+        description: "Signal strength of the sensor"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100 
