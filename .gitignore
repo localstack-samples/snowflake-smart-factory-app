@@ -7,3 +7,8 @@ volume/
 dbt_project/logs/
 dbt_project/target/
 dbt_project/dbt_packages/
+
+# pytest
+
+.pytest_cache/
+__pycache__

@@ -29,30 +29,14 @@ CREATE OR REPLACE STAGE sensor_data_stage
     FILE_FORMAT = csv_format
     AWS_ROLE = NULL;
 
--- Copy data from stage into RAW_SENSOR_DATA table
-COPY INTO RAW_SENSOR_DATA
+-- Create a Snowpipe for automated ingestion
+CREATE OR REPLACE PIPE sensor_data_pipe 
+  AUTO_INGEST = TRUE
+  AS
+  COPY INTO RAW_SENSOR_DATA
     FROM @sensor_data_stage
-    PATTERN='.*sensor_data.*[.]csv'
+    PATTERN='.*[.]csv'
     ON_ERROR = 'CONTINUE';
 
--- Validate data load
-SELECT COUNT(*) as total_records FROM RAW_SENSOR_DATA;
-
--- Validate data quality
-SELECT 
-    'Data Quality Check' as check_type,
-    COUNT(*) as total_records,
-    COUNT(DISTINCT machine_id) as unique_machines,
-    COUNT(*) - COUNT(temperature) as null_temperatures,
-    COUNT(*) - COUNT(vibration) as null_vibrations,
-    COUNT(*) - COUNT(status_code) as null_status_codes,
-    MIN(timestamp) as earliest_reading,
-    MAX(timestamp) as latest_reading
-FROM RAW_SENSOR_DATA;
-
--- Sample data preview
-SELECT * FROM RAW_SENSOR_DATA LIMIT 5;
-
--- Note: All transformations are now handled by dbt models:
--- - Staging: models/staging/stg_sensor_readings.sql
--- - Marts: models/marts/processed_machine_health.sql
+-- Show pipe details (important to get notification_channel)
+DESC PIPE sensor_data_pipe
