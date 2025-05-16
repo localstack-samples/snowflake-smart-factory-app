@@ -1,0 +1,11 @@
+manifest_version: 1
+
+version:
+  name: Dev
+  label: "Dev Version"
+  comment: "Default version used for development. Override for actual deployment."
+
+artifacts:
+  setup_script: setup_script.sql
+  default_streamlit: core.ui
+  extension_code: true 

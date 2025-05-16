@@ -1,0 +1,7 @@
+CREATE APPLICATION ROLE IF NOT EXISTS app_public;
+
+CREATE STREAMLIT core.ui
+     FROM '/streamlit/'
+     MAIN_FILE = 'ui.py';
+
+GRANT USAGE ON STREAMLIT core.ui TO APPLICATION ROLE app_public;

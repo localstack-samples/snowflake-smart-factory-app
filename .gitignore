@@ -16,3 +16,7 @@ __pycache__
 # Dagster
 
 .tmp_dagster_home*
+
+# Native App
+
+app/output/

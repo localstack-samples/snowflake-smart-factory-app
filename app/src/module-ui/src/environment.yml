@@ -1,0 +1,8 @@
+name: tasks_streams_app
+channels:
+  - snowflake
+dependencies:
+  - streamlit=1.26.0
+  - snowflake-native-apps-permission
+  - plotly
+  - pandas
