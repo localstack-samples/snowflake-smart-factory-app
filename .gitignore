@@ -12,3 +12,7 @@ dbt_project/dbt_packages/
 
 .pytest_cache/
 __pycache__
+
+# Dagster
+
+.tmp_dagster_home*

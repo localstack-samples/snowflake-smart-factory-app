@@ -7,3 +7,7 @@ numpy
 plotly
 scikit-learn
 snowflake-connector-python
+dagster
+dagster-aws
+dagster-dbt
+dagster-webserver
