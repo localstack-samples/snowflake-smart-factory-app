@@ -72,9 +72,3 @@ if __name__ == "__main__":
     
     upload_file_to_s3(args.file, args.name)
     list_bucket_contents()
-    
-    print("\nNext steps:")
-    print("1. Wait a few seconds for Snowpipe to process the file")
-    print("2. Check RAW_SENSOR_DATA table in Snowflake to confirm data ingestion")
-    print("3. Run dbt to transform the data")
-    print("   cd dbt_project && dbt run") 

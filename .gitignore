@@ -4,9 +4,9 @@ volume/
 
 # dbt 
 
-dbt_project/logs/
-dbt_project/target/
-dbt_project/dbt_packages/
+logs/
+target/
+dbt_packages/
 
 # pytest
 

@@ -5,7 +5,7 @@ from typing import List
 import os
 
 # Configure dbt project
-DBT_PROJECT_DIR = os.path.join(os.path.dirname(__file__), "..", "dbt_project")
+DBT_PROJECT_DIR = os.path.join(os.path.dirname(__file__), "..")
 DBT_PROFILES_DIR = DBT_PROJECT_DIR
 
 @dbt_assets(manifest=os.path.join(DBT_PROJECT_DIR, "target", "manifest.json"))
