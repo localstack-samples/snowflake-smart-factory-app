@@ -46,6 +46,7 @@ jobs:
             --private-key-file "" \
             --token-file-path "" \
             --host snowflake.localhost.localstack.cloud
+          snow connection list
 
       - name: Start LocalStack
         uses: LocalStack/setup-localstack@v0.2.4
