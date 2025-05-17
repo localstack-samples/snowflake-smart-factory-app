@@ -11,3 +11,4 @@ dagster
 dagster-aws
 dagster-dbt
 dagster-webserver
+snowflake-cli
