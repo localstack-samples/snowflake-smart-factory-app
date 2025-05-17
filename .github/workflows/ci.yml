@@ -40,12 +40,9 @@ jobs:
             --warehouse test \
             --database test \
             --schema test \
-            --region us-east-1 \
             --port 4566 \
-            --authenticator \
-            --private-key-file \
-            --token-file-path \
-            --host snowflake.localhost.localstack.cloud
+            --host snowflake.localhost.localstack.cloud \
+            --no-interactive
           snow connection list
 
       - name: Start LocalStack
