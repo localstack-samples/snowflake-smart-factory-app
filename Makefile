@@ -23,6 +23,7 @@ install:		## Install dependencies
 	pip install virtualenv
 	virtualenv env
 	bash -c "source env/bin/activate && pip install -r requirements.txt"
+	bash -c "source env/bin/activate && dbt deps"
 	@echo "Dependencies installed successfully."
 
 seed:			## Create & Seed the database
