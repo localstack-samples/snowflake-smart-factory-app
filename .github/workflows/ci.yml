@@ -32,7 +32,7 @@ jobs:
           pip install snowflake-cli==3.7.2
           snow --version
           snow connection add \
-            --connection-name ls \
+            --connection-name localstack \
             --user test \
             --password test \
             --account test \
