@@ -42,9 +42,9 @@ jobs:
             --schema test \
             --region us-east-1 \
             --port 4566 \
-            --authenticator "" \
-            --private-key-file "" \
-            --token-file-path "" \
+            --authenticator \
+            --private-key-file \
+            --token-file-path \
             --host snowflake.localhost.localstack.cloud
           snow connection list
 
