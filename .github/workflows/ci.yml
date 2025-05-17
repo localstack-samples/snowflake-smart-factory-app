@@ -27,6 +27,17 @@ jobs:
         with:
           python-version: '3.12' 
 
+      - name: Install Snow CLI
+        run: |
+          pip install snowflake-cli snowflake snowflake.core
+          snow --version
+          snow connection add \
+            --connection-name localstack \
+            --user test \
+            --password test \
+            --account test \
+            --host snowflake.localhost.localstack.cloud
+
       - name: Start LocalStack
         uses: LocalStack/setup-localstack@v0.2.4
         with:
@@ -41,17 +52,6 @@ jobs:
       - name: Install dependencies
         run: |
           make install
-
-      - name: Install Snow CLI
-        run: |
-          pip install snowflake-cli
-          snow --version
-          snow connection add \
-            --connection-name localstack \
-            --user test \
-            --password test \
-            --account test \
-            --host snowflake.localhost.localstack.cloud
 
       - name: Create Snowflake resources
         run: |
