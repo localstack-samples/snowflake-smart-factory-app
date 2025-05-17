@@ -29,7 +29,7 @@ jobs:
 
       - name: Install Snow CLI
         run: |
-          pip install snowflake-cli snowflake snowflake.core
+          pip install snowflake-cli==3.7.2
           snow --version
           snow connection add \
             --connection-name localstack \
