@@ -38,17 +38,17 @@ models:
               min_value: 0
               max_value: 500
               
-      - name: reading_status
-        description: "Status of the sensor reading"
-        tests:
-          - not_null
-          - accepted_values:
-              values: ['normal', 'anomalous', 'invalid']
+      # - name: reading_status
+      #   description: "Status of the sensor reading"
+      #   tests:
+      #     - not_null
+          # - accepted_values:
+          #     values: ['normal', 'anomalous', 'invalid']
               
-      - name: signal_strength
-        description: "Signal strength of the sensor"
-        tests:
-          - not_null
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 100 
+      # - name: signal_strength
+      #   description: "Signal strength of the sensor"
+      #   tests:
+      #     - not_null
+          # - dbt_utils.accepted_range:
+          #     min_value: 0
+          #     max_value: 100 

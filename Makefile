@@ -47,7 +47,7 @@ pipeline:		## Setup Dagster pipeline
 
 dbt:			## Run dbt models
 	@echo "Running dbt..."
-	bash -c "source env/bin/activate && dbt run --profile localstack"
+	bash -c "source env/bin/activate && dbt build --profile localstack"
 	@echo "Dbt run successfully."
 
 app:			## Run Snowflake Native App
