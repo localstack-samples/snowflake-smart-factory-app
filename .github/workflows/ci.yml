@@ -32,10 +32,16 @@ jobs:
           pip install snowflake-cli==3.7.2
           snow --version
           snow connection add \
-            --connection-name localstack \
+            --connection-name ls \
             --user test \
             --password test \
             --account test \
+            --role test \
+            --warehouse test \
+            --database test \
+            --schema test \
+            --region us-east-1 \
+            --port 4566 \
             --host snowflake.localhost.localstack.cloud
 
       - name: Start LocalStack
