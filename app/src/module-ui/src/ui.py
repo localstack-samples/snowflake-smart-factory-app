@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-# import plotly.express as px
+import plotly.express as px
 from snowflake.snowpark.context import get_active_session
 
 def load_machine_health_data(conn):
@@ -104,29 +104,29 @@ try:
     with col1:
         st.subheader("Machine Health Status")
         status_counts = health_data['health_status'].value_counts()
-      #   fig = px.pie(values=status_counts.values, 
-      #               names=status_counts.index, 
-      #               title="Health Status Distribution",
-      #               color_discrete_map={
-      #                   'HEALTHY': '#00ff00',
-      #                   'NEEDS_MAINTENANCE': '#ffa500',
-      #                   'CRITICAL': '#ff0000'
-      #               })
-      #   st.plotly_chart(fig)
+        fig = px.pie(values=status_counts.values, 
+                    names=status_counts.index, 
+                    title="Health Status Distribution",
+                    color_discrete_map={
+                        'HEALTHY': '#00ff00',
+                        'NEEDS_MAINTENANCE': '#ffa500',
+                        'CRITICAL': '#ff0000'
+                    })
+        st.plotly_chart(fig)
         
     with col2:
         st.subheader("Risk Scores by Machine")
-      #   fig = px.bar(health_data, 
-      #               x='machine_id', 
-      #               y='failure_risk_score',
-      #               color='health_status',
-      #               title="Failure Risk Scores",
-      #               color_discrete_map={
-      #                   'HEALTHY': '#00ff00',
-      #                   'NEEDS_MAINTENANCE': '#ffa500',
-      #                   'CRITICAL': '#ff0000'
-      #               })
-      #   st.plotly_chart(fig)
+        fig = px.bar(health_data, 
+                    x='machine_id', 
+                    y='failure_risk_score',
+                    color='health_status',
+                    title="Failure Risk Scores",
+                    color_discrete_map={
+                        'HEALTHY': '#00ff00',
+                        'NEEDS_MAINTENANCE': '#ffa500',
+                        'CRITICAL': '#ff0000'
+                    })
+        st.plotly_chart(fig)
     
     # Detailed machine data
     st.subheader("Machine Details")
@@ -145,11 +145,11 @@ try:
             
             # Show historical sensor data
             machine_history = sensor_data[sensor_data['machine_id'] == machine_id]
-            # fig = px.line(machine_history, 
-            #              x='timestamp', 
-            #              y=['temperature', 'vibration', 'pressure'],
-            #              title=f"Sensor History - Machine {machine_id}")
-            # st.plotly_chart(fig)
+            fig = px.line(machine_history, 
+                         x='timestamp', 
+                         y=['temperature', 'vibration', 'pressure'],
+                         title=f"Sensor History - Machine {machine_id}")
+            st.plotly_chart(fig)
     
 except Exception as e:
     st.error(f"Error in application: {str(e)}")
