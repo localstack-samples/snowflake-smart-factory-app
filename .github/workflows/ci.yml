@@ -79,5 +79,5 @@ jobs:
 
       - name: Run tests
         run: |
-          pip3 install pytest
+          pip3 install pytest pandas numpy
           pytest tests/
