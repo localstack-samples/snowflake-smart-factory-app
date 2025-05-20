@@ -72,31 +72,28 @@ def test_data_completeness(snowflake_conn):
     """Test for data completeness - no nulls and all machines have records"""
     cursor = snowflake_conn.cursor()
     try:
-        # Check for NULL values in critical columns using CASE statements
+        # Check for NULL values in critical columns
         cursor.execute("""
             SELECT COUNT(*) 
             FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics 
-            WHERE machine_id = '' 
-               OR health_status = ''
-               OR failure_risk_score = 0
-               OR maintenance_recommendation = ''
+            WHERE machine_id IS NULL 
+               OR health_status IS NULL 
+               OR failure_risk_score IS NULL 
+               OR maintenance_recommendation IS NULL
         """)
         null_count = cursor.fetchone()[0]
-        assert null_count == 0, "Critical columns should not be empty"
+        assert null_count == 0, "Critical columns should not contain NULL values"
         
-        # Check if each machine has at least one record using EXISTS
+        # Check if each machine has at least one record
         cursor.execute("""
-            SELECT m1.machine_id
-            FROM FACTORY_PIPELINE_DEMO.PUBLIC.RAW_SENSOR_DATA m1
-            WHERE NOT EXISTS (
-                SELECT 1 
-                FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics m2
-                WHERE m1.machine_id = m2.machine_id
-            )
-            LIMIT 1
+            SELECT COUNT(*) 
+            FROM FACTORY_PIPELINE_DEMO.PUBLIC.RAW_SENSOR_DATA s
+            LEFT JOIN FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics m 
+                ON s.machine_id = m.machine_id 
+            WHERE m.machine_id IS NULL
         """)
-        missing_machines = cursor.fetchone()
-        assert missing_machines is None, "All machines should have health metrics"
+        missing_machines = cursor.fetchone()[0]
+        assert missing_machines == 0, "All machines should have health metrics"
         
     finally:
         cursor.close()
@@ -222,19 +219,16 @@ def test_data_relationships(snowflake_conn):
     """Test relationships between metrics and source data"""
     cursor = snowflake_conn.cursor()
     try:
-        # Check if all machines in metrics exist in sensor data using EXISTS
+        # Check if all machines in metrics exist in sensor data
         cursor.execute("""
-            SELECT m.machine_id
-            FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics m
-            WHERE NOT EXISTS (
-                SELECT 1 
-                FROM FACTORY_PIPELINE_DEMO.PUBLIC.RAW_SENSOR_DATA s
-                WHERE m.machine_id = s.machine_id
-            )
-            LIMIT 1
+            SELECT COUNT(*) 
+            FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics m 
+            LEFT JOIN FACTORY_PIPELINE_DEMO.PUBLIC.RAW_SENSOR_DATA s 
+                ON m.machine_id = s.machine_id 
+            WHERE s.machine_id IS NULL
         """)
-        orphaned_metric = cursor.fetchone()
-        assert orphaned_metric is None, "All machines in metrics should exist in sensor data"
+        orphaned_metrics = cursor.fetchone()[0]
+        assert orphaned_metrics == 0, "All machines in metrics should exist in sensor data"
         
         # Check if metrics align with recent sensor data
         cursor.execute("""
