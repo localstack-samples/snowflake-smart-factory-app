@@ -15,25 +15,25 @@ models:
         tests:
           - not_null
           
-      # - name: total_readings
-      #   description: "Total number of readings for the machine"
-      #   tests:
-      #     - not_null
-      #     - dbt_utils.accepted_range:
-      #         min_value: 0
+      - name: total_readings
+        description: "Total number of readings for the machine"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
               
-      # - name: anomalous_readings
-      #   description: "Count of anomalous readings"
-      #   tests:
-      #     - not_null
+      - name: anomalous_readings
+        description: "Count of anomalous readings"
+        tests:
+          - not_null
               
-      # - name: avg_temperature
-      #   description: "Average temperature reading"
-      #   tests:
-      #     - not_null
-      #     - dbt_utils.accepted_range:
-      #         min_value: -50
-      #         max_value: 150
+      - name: avg_temperature
+        description: "Average temperature reading"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: -50
+              max_value: 150
               
       - name: max_vibration
         description: "Maximum vibration reading"
@@ -51,24 +51,24 @@ models:
               min_value: 0
               max_value: 100
 
-      # - name: failure_risk_score
-      #   description: "Calculated risk score for machine failure (0-100)"
-      #   tests:
-      #     - not_null
-      #     - dbt_utils.accepted_range:
-      #         min_value: 0
-      #         max_value: 100
+      - name: failure_risk_score
+        description: "Calculated risk score for machine failure (0-100)"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
               
-      # - name: health_status
-      #   description: "Current health status of the machine"
-      #   tests:
-      #     - not_null
-      #     - accepted_values:
-      #         values: ['HEALTHY', 'NEEDS_MAINTENANCE', 'CRITICAL']
+      - name: health_status
+        description: "Current health status of the machine"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['HEALTHY', 'NEEDS_MAINTENANCE', 'CRITICAL']
               
-      # - name: maintenance_recommendation
-      #   description: "Recommended maintenance action"
-      #   tests:
-      #     - not_null
-      #     - accepted_values:
-      #         values: ['No action needed', 'Schedule maintenance within 48 hours', 'Immediate maintenance required'] 
+      - name: maintenance_recommendation
+        description: "Recommended maintenance action"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['No action needed', 'Schedule maintenance within 48 hours', 'Immediate maintenance required'] 
