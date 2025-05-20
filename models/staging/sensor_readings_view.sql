@@ -16,7 +16,7 @@ WITH source AS (
 base_readings AS (
     SELECT
         machine_id,
-        timestamp       AS event_time,
+        event_time,
         temperature,
         vibration,
         pressure,
@@ -97,4 +97,4 @@ SELECT
 FROM anomaly_detection
 WHERE avg_temperature IS NOT NULL
   AND max_vibration    IS NOT NULL
-  AND validated_pressure IS NOT NULL;
+  AND validated_pressure IS NOT NULL

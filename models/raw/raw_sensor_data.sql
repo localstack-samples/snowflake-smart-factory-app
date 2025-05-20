@@ -14,7 +14,7 @@
 WITH source AS (
     SELECT
         machine_id,
-        "timestamp"::timestamp_ntz AS event_time,
+        timestamp::timestamp_ntz AS event_time,
         temperature,
         vibration,
         pressure,
@@ -47,7 +47,7 @@ WHERE s.event_time > b.last_time
 
 SELECT
     machine_id,
-    "timestamp"::timestamp_ntz AS event_time,
+    timestamp::timestamp_ntz AS event_time,
     temperature,
     vibration,
     pressure,
