@@ -140,15 +140,14 @@ def create_time_series(df, machine_id, metric, anomaly_threshold=None):
             '<b>Value</b>: %{y:.2f}<br>'
         ))
     
-    # Update layout
     fig.update_layout(
         title=f"{metric.title()} Over Time - Machine {machine_id}",
         xaxis_title="Time",
         yaxis_title=metric.title(),
         hovermode='x unified',
         showlegend=True,
-        height=300,
-        margin=dict(l=10, r=10, t=50, b=10)
+        height=500,
+        margin=dict(l=10, r=10, t=30, b=10)
     )
     
     return fig
@@ -183,6 +182,72 @@ st.markdown("""
     }
     .stProgress .st-bo {
         background-color: #00ff00;
+    }
+
+    /* Footer styling */
+    .footer-container {
+        margin-top: 1rem;
+        padding-bottom: 0;
+    }
+    .footer {
+        background-color: rgba(30, 32, 34, 0.8);
+        padding: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #2E3236;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin: 0;
+    }
+    
+    /* Hide any overflow at the bottom of the page */
+    .main .block-container {
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    /* Hide default footer */
+    footer {visibility: hidden;}
+    
+    /* Custom footer */
+    .custom-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #0E1117;
+        padding: 8px 0;
+        text-align: center;
+        z-index: 999;
+    }
+    .custom-footer p {
+        margin: 0;
+        color: #FAFAFA;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    /* Adjust main content to not be hidden by footer */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        gap: 1rem;
+    }
+
+    /* Reduce spacing between elements */
+    .element-container {
+        margin-bottom: 1rem !important;  /* Reduced from default */
+    }
+    
+    /* Reduce tab padding */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 1rem;
+        padding: 0.5rem 0;
+    }
+    
+    /* Adjust plot container margins */
+    .stPlotlyChart {
+        margin-bottom: 0.5rem;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -402,18 +467,28 @@ try:
         # Time series charts with anomaly detection
         st.subheader("📈 Sensor Trends")
         
-        # Temperature time series
-        temp_chart = create_time_series(sensor_data, selected_machine, 'temperature', anomaly_threshold=2)
-        st.plotly_chart(temp_chart, use_container_width=True)
+        # Create tabs for different sensor metrics
+        trend_tabs = st.tabs(["Temperature", "Pressure", "Vibration"])
         
-        # Vibration time series
-        vib_chart = create_time_series(sensor_data, selected_machine, 'vibration', anomaly_threshold=2)
-        st.plotly_chart(vib_chart, use_container_width=True)
-        
-        # Pressure time series
-        pressure_chart = create_time_series(sensor_data, selected_machine, 'pressure', anomaly_threshold=2)
-        st.plotly_chart(pressure_chart, use_container_width=True)
+        with trend_tabs[0]:
+            temp_chart = create_time_series(sensor_data, selected_machine, 'temperature', anomaly_threshold=2)
+            st.plotly_chart(temp_chart, use_container_width=True)
+            
+        with trend_tabs[1]:
+            pressure_chart = create_time_series(sensor_data, selected_machine, 'pressure', anomaly_threshold=2)
+            st.plotly_chart(pressure_chart, use_container_width=True)
+            
+        with trend_tabs[2]:
+            vib_chart = create_time_series(sensor_data, selected_machine, 'vibration', anomaly_threshold=2)
+            st.plotly_chart(vib_chart, use_container_width=True)
 
 except Exception as e:
     st.error(f"Error in application: {str(e)}")
-    st.info("Make sure LocalStack is running and the Snowflake emulator is properly configured.") 
+    st.info("Make sure LocalStack is running and the Snowflake emulator is properly configured.")
+
+# Move this outside the try-except block, at the very end of the file
+st.markdown("""
+    <div class="custom-footer">
+        <p>Built with ❤️ by LocalStack</p>
+    </div>
+    """, unsafe_allow_html=True) 
