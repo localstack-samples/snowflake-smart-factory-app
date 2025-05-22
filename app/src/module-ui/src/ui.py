@@ -297,6 +297,21 @@ try:
             'NEEDS_MAINTENANCE': 'inverse',
             'CRITICAL': 'inverse'
         }
+        
+        # Determine risk level based on health status and risk score
+        risk_score = float(machine_health['failure_risk_score'])
+        
+        # Align risk assessment with health status
+        if machine_health['health_status'] == 'HEALTHY':
+            risk_delta = "Low Risk"
+            delta_color = 'normal'
+        elif machine_health['health_status'] == 'NEEDS_MAINTENANCE':
+            risk_delta = "Medium Risk"
+            delta_color = 'inverse'
+        else:  # CRITICAL
+            risk_delta = "High Risk"
+            delta_color = 'inverse'
+        
         status_cols[0].metric(
             "Health Status",
             machine_health['health_status'],
@@ -304,27 +319,33 @@ try:
             delta_color=status_color.get(machine_health['health_status'], 'normal')
         )
         
-        # Risk Score with threshold-based delta color
-        risk_score = float(machine_health['failure_risk_score'])
-        risk_delta = "High Risk" if risk_score > 0.7 else "Medium Risk" if risk_score > 0.3 else "Low Risk"
         status_cols[1].metric(
             "Risk Score",
             f"{risk_score:.2f}",
             delta=risk_delta,
-            delta_color='inverse' if risk_score > 0.7 else 'normal'
+            delta_color=delta_color
         )
         
-        # Latest sensor readings
+        # Calculate temperature delta and determine color
+        temp_delta = machine_sensors['temperature'] - sensor_data[sensor_data['machine_id'] == selected_machine]['temperature'].mean()
+        temp_delta_color = 'inverse' if abs(temp_delta) > 5 else 'normal'
+        
         status_cols[2].metric(
             "Temperature",
             f"{machine_sensors['temperature']:.1f}°C",
-            delta=f"{machine_sensors['temperature'] - sensor_data[sensor_data['machine_id'] == selected_machine]['temperature'].mean():.1f}°C"
+            delta=f"{temp_delta:.1f}°C",
+            delta_color=temp_delta_color
         )
+        
+        # Calculate vibration delta and determine color
+        vib_delta = machine_sensors['vibration'] - sensor_data[sensor_data['machine_id'] == selected_machine]['vibration'].mean()
+        vib_delta_color = 'inverse' if abs(vib_delta) > 0.1 else 'normal'
         
         status_cols[3].metric(
             "Vibration",
             f"{machine_sensors['vibration']:.3f}",
-            delta=f"{machine_sensors['vibration'] - sensor_data[sensor_data['machine_id'] == selected_machine]['vibration'].mean():.3f}"
+            delta=f"{vib_delta:.3f}",
+            delta_color=vib_delta_color
         )
         
         # Maintenance recommendation
