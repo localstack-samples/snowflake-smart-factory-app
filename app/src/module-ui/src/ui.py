@@ -164,6 +164,7 @@ st.markdown("""
         padding: 15px;
         border-radius: 8px;
         border: 1px solid #2E3236;
+        min-height: 120px;  /* Fixed height for all metric cards */
     }
     .stMetric:hover {
         background-color: #2E3236;
@@ -171,9 +172,11 @@ st.markdown("""
     }
     .stMetric [data-testid="stMetricLabel"] {
         color: #E0E2E6 !important;
+        font-size: 1rem !important;
     }
     .stMetric [data-testid="stMetricValue"] {
         color: #FFFFFF !important;
+        font-size: 2rem !important;
     }
     .stMetric [data-testid="stMetricDelta"] {
         color: #B0B2B6 !important;
@@ -289,7 +292,7 @@ try:
         machine_sensors = sensor_data[sensor_data['machine_id'] == selected_machine].iloc[-1]
         
         # Status indicators
-        status_cols = st.columns(4)
+        status_cols = st.columns(5)  # Changed from 4 to 5 columns
         
         # Health Status with color-coded delta
         status_color = {
@@ -337,11 +340,22 @@ try:
             delta_color=temp_delta_color
         )
         
+        # Calculate pressure delta and determine color
+        pressure_delta = machine_sensors['pressure'] - sensor_data[sensor_data['machine_id'] == selected_machine]['pressure'].mean()
+        pressure_delta_color = 'inverse' if abs(pressure_delta) > 10 else 'normal'
+        
+        status_cols[3].metric(
+            "Pressure",
+            f"{machine_sensors['pressure']:.1f}",
+            delta=f"{pressure_delta:.1f}",
+            delta_color=pressure_delta_color
+        )
+        
         # Calculate vibration delta and determine color
         vib_delta = machine_sensors['vibration'] - sensor_data[sensor_data['machine_id'] == selected_machine]['vibration'].mean()
         vib_delta_color = 'inverse' if abs(vib_delta) > 0.1 else 'normal'
         
-        status_cols[3].metric(
+        status_cols[4].metric(
             "Vibration",
             f"{machine_sensors['vibration']:.3f}",
             delta=f"{vib_delta:.3f}",
