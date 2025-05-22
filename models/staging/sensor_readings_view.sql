@@ -4,7 +4,9 @@
   config(
     materialized = 'view',
     schema       = 'staging',
-    alias        = 'sensor_readings_view'
+    alias        = 'sensor_readings_view',
+    replace_existing = true,
+    pre_hook = "DROP VIEW IF EXISTS {{ this }}"
   )
 }}
 
