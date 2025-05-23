@@ -2,7 +2,8 @@
     config(
         materialized='table',
         schema='marts',
-        alias='machine_health_metrics'
+        alias='machine_health_metrics',
+        pre_hook="DROP TABLE IF EXISTS {{ this }}"
     )
 }}
 
