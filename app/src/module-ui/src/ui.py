@@ -18,15 +18,17 @@ def load_machine_health_data(conn):
         
         # Get column names from cursor description
         columns = [desc[0].lower() for desc in cur.description]
-        st.write("Debug - Available columns:", columns)
+        if "debug" in st.query_params and st.query_params["debug"] == "true":
+            st.write("Debug - Available columns:", columns)
         
         # Fetch all data and create DataFrame
         data = cur.fetchall()
         df = pd.DataFrame(data, columns=columns)
         
         # Debug output
-        st.write("Debug - Data shape:", df.shape)
-        st.write("Debug - First few rows:", df.head())
+        if "debug" in st.query_params and st.query_params["debug"] == "true":
+            st.write("Debug - Data shape:", df.shape)
+            st.write("Debug - First few rows:", df.head())
         
         # Ensure all string columns are properly handled
         str_columns = ['machine_id', 'health_status', 'maintenance_recommendation']
@@ -261,7 +263,8 @@ try:
     # conn = get_active_session()
     
     # Debug connection info
-    st.write("Debug - Connection established:", bool(conn))
+    if "debug" in st.query_params and st.query_params["debug"] == "true":
+        st.write("Debug - Connection established:", bool(conn))
     
     # Load data
     health_data = load_machine_health_data(conn)
