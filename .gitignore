@@ -20,3 +20,4 @@ __pycache__
 # Native App
 
 app/output/
+.DS_Store
