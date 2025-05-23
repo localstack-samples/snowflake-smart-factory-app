@@ -62,7 +62,7 @@ deploy:			## Deploy the entire stack
 	make aws
 	make upload
 	make dbt
-	# make app
+	make app
 	@echo "Deployment completed successfully."
 
 test:			## Run tests
