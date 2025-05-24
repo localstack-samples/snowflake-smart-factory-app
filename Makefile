@@ -64,6 +64,15 @@ deploy:			## Deploy the entire stack
 	make dbt
 	@echo "Deployment completed successfully. Run 'make app' to view the app."
 
+debug:			## Clean up everything and redeploy to fix bugs
+	@echo "Running debug cleanup and redeploy..."
+	snow sql -c localstack -q "USE DATABASE FACTORY_PIPELINE_DEMO; USE SCHEMA PUBLIC; DROP FILE FORMAT IF EXISTS csv_format;"
+	snow sql -c localstack -q "DROP PIPE IF EXISTS FACTORY_PIPELINE_DEMO.PUBLIC.SENSOR_DATA_PIPE;"
+	snow sql -c localstack -q "DROP TABLE IF EXISTS FACTORY_PIPELINE_DEMO.PUBLIC_RAW.SENSOR_DATA;"
+	awslocal s3 rb s3://factory-sensor-data-local --force
+	make deploy
+	@echo "Debug cleanup and redeploy completed successfully."
+
 test:			## Run tests
 	@echo "Running tests..."
 	bash -c "source env/bin/activate && pytest tests/"
@@ -90,4 +99,4 @@ ready:			## Make sure the LocalStack container is up
 logs:			## Save the logs in a separate file
 		@localstack logs > logs.txt
 
-.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs
+.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug
