@@ -17,6 +17,11 @@ CREATE OR REPLACE TABLE RAW_SENSOR_DATA (
 -- Create a file format for CSV files
 CREATE OR REPLACE FILE FORMAT csv_format
     TYPE = CSV
+    -- 🐛 DEMO BUG: Incorrect CSV delimiter configuration
+    -- The actual CSV file uses commas, not semicolons.
+    -- This mismatch causes data parsing to fail in dbt test "table_not_empty"
+    -- Snowpipe will fail to parse CSV data correctly and Streamlit app shows no data
+    -- FIELD_DELIMITER = ';'  -- 🚨 BUG: Causes "RAW_SENSOR_DATA" table to remain empty
     FIELD_DELIMITER = ','
     SKIP_HEADER = 1
     NULL_IF = ('NULL', 'null')
