@@ -2,6 +2,8 @@ version: 2
 
 models:
   - name: processed_machine_health
+    tests:
+      - table_not_empty
     description: "Final processed machine health metrics"
     columns:
       - name: machine_id
