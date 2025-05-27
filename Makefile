@@ -110,4 +110,44 @@ ready:			## Make sure the LocalStack container is up
 logs:			## Save the logs in a separate file
 		@localstack logs > logs.txt
 
-.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug generate
+# Setup alerting system with UDF and SES
+setup-alerts:
+	@echo "🚨 Setting up Stream-based SES Alerting System..."
+	snow sql -f setup/04_create_alert_udf.sql -c localstack
+	@echo "✅ Alert UDF and tables created"
+
+# Send critical machines alert email
+send-alert:
+	@echo "📧 Sending critical machines alert email..."
+	snow sql -q "SELECT send_critical_machines_report()" -c localstack
+	@echo "✅ Alert email sent"
+
+# Generate critical data and setup SES
+demo-critical:
+	@echo "🚨 Generating critical sensor data for alerting demo..."
+	python3 setup/06_demo_critical_data.py
+	@echo "✅ Critical data generated and SES configured"
+
+# Complete alerting demo workflow
+demo-alerts: demo-critical dbt send-alert
+	@echo "🎯 Simple Alert Demo Complete!"
+	@echo ""
+	@echo "📧 To test the alerting system:"
+	@echo "1. Send alert email: make send-alert"
+	@echo "2. Check sent emails: curl localhost:4566/_aws/ses | jq"
+	@echo "3. View alert log: snow sql -q 'SELECT * FROM ALERT_LOG ORDER BY alert_timestamp DESC' -c localstack"
+	@echo ""
+	@echo "🔍 Monitor LocalStack logs to see SES email activity!"
+
+# Test alert functionality
+test-alert:
+	@echo "🧪 Testing alert email..."
+	snow sql -q "SELECT send_critical_machines_report()" -c localstack
+	@echo "✅ Alert test complete"
+
+# Check SES emails
+check-emails:
+	@echo "📧 Checking sent SES emails..."
+	curl -s localhost:4566/_aws/ses | jq '.'
+
+.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug generate setup-alerts send-alert demo-critical demo-alerts test-alert check-emails
