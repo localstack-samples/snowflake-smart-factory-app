@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS ALERT_LOG (
     alert_timestamp TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
 );
 
--- Simple UDF to send email report of all critical machines
-CREATE OR REPLACE FUNCTION send_critical_machines_report()
+-- UDF to send email report with critical machines data passed as parameter
+CREATE OR REPLACE FUNCTION send_critical_machines_report(critical_machines_json VARCHAR)
 RETURNS VARIANT
 LANGUAGE PYTHON
 RUNTIME_VERSION = 3.9
@@ -23,7 +23,7 @@ import boto3
 import json
 from datetime import datetime
 
-def send_report():
+def send_report(critical_machines_json):
     try:
         # LocalStack SES configuration
         endpoint_url = "http://localhost:4566"
@@ -48,13 +48,24 @@ def send_report():
         except:
             pass  # Identities might already be verified
         
-        # Mock critical machines data (in real scenario, this would query the database)
-        # For now, we'll simulate some critical machines
-        critical_machines = [
-            {"machine_id": "MACHINE_001", "risk_score": 95.5, "issue": "High temperature detected"},
-            {"machine_id": "MACHINE_003", "risk_score": 87.2, "issue": "Excessive vibration"},
-            {"machine_id": "MACHINE_007", "risk_score": 92.8, "issue": "Pressure anomaly"}
-        ]
+        # Parse the critical machines data passed as pipe-delimited string
+        # Format: machine_id|risk_score|issue;machine_id|risk_score|issue;...
+        critical_machines = []
+        try:
+            if critical_machines_json and critical_machines_json.strip():
+                machine_entries = critical_machines_json.split(';')
+                for entry in machine_entries:
+                    if entry.strip():
+                        parts = entry.split('|')
+                        if len(parts) >= 3:
+                            critical_machines.append({
+                                "machine_id": parts[0],
+                                "risk_score": float(parts[1]) if parts[1] else 0.0,
+                                "issue": parts[2] if parts[2] else "Immediate maintenance required"
+                            })
+        except Exception as e:
+            # Fallback to empty list if parsing fails
+            critical_machines = []
         
         if not critical_machines:
             return {
@@ -180,4 +191,31 @@ Powered by LocalStack + Snowflake
             "email_sent": False,
             "timestamp": datetime.now().isoformat()
         }
+$$;
+
+-- Simple view to get critical machines as a concatenated string
+CREATE OR REPLACE VIEW critical_machines_list AS
+SELECT 
+    LISTAGG(
+        machine_id || '|' || failure_risk_score || '|' || 
+        CASE WHEN maintenance_recommendation IS NULL THEN 'Immediate maintenance required' 
+             ELSE maintenance_recommendation END, 
+        ';'
+    ) as machines_data
+FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics
+WHERE health_status = 'CRITICAL';
+
+-- Simple wrapper function that gets critical machines and sends alert
+CREATE OR REPLACE FUNCTION send_alert_from_db()
+RETURNS VARIANT
+LANGUAGE SQL
+AS $$
+    SELECT 
+        CASE 
+            WHEN machines_data IS NULL OR machines_data = '' THEN 
+                send_critical_machines_report('')
+            ELSE 
+                send_critical_machines_report(machines_data)
+        END as alert_result
+    FROM critical_machines_list
 $$; 

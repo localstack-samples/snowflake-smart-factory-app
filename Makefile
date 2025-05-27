@@ -116,10 +116,10 @@ setup-alerts:
 	snow sql -f setup/04_create_alert_udf.sql -c localstack
 	@echo "✅ Alert UDF and tables created"
 
-# Send critical machines alert email
+# Send critical machines alert email (using real database data)
 send-alert:
-	@echo "📧 Sending critical machines alert email..."
-	snow sql -q "SELECT send_critical_machines_report()" -c localstack
+	@echo "📧 Sending critical machines alert email with real data..."
+	snow sql -q "SELECT send_alert_from_db()" -c localstack
 	@echo "✅ Alert email sent"
 
 # Generate critical data and setup SES
@@ -130,19 +130,21 @@ demo-critical:
 
 # Complete alerting demo workflow
 demo-alerts: demo-critical dbt send-alert
-	@echo "🎯 Simple Alert Demo Complete!"
+	@echo "🎯 Real-time Alert Demo Complete!"
 	@echo ""
 	@echo "📧 To test the alerting system:"
-	@echo "1. Send alert email: make send-alert"
-	@echo "2. Check sent emails: curl localhost:4566/_aws/ses | jq"
-	@echo "3. View alert log: snow sql -q 'SELECT * FROM ALERT_LOG ORDER BY alert_timestamp DESC' -c localstack"
+	@echo "1. Check critical machines: make check-critical"
+	@echo "2. Send alert email (real data): make send-alert"
+	@echo "3. Check sent emails: make check-emails"
+	@echo "4. View alert log: snow sql -q 'SELECT * FROM ALERT_LOG ORDER BY alert_timestamp DESC' -c localstack"
 	@echo ""
 	@echo "🔍 Monitor LocalStack logs to see SES email activity!"
+	@echo "💡 The system now queries real critical machines from the database!"
 
 # Test alert functionality
 test-alert:
-	@echo "🧪 Testing alert email..."
-	snow sql -q "SELECT send_critical_machines_report()" -c localstack
+	@echo "🧪 Testing alert email with real data..."
+	snow sql -q "SELECT send_alert_from_db()" -c localstack
 	@echo "✅ Alert test complete"
 
 # Check SES emails
@@ -150,4 +152,9 @@ check-emails:
 	@echo "📧 Checking sent SES emails..."
 	curl -s localhost:4566/_aws/ses | jq '.'
 
-.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug generate setup-alerts send-alert demo-critical demo-alerts test-alert check-emails
+# Check critical machines in database
+check-critical:
+	@echo "🔍 Checking critical machines in database..."
+	snow sql -q "SELECT machine_id, health_status, failure_risk_score, maintenance_recommendation FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics WHERE health_status = 'CRITICAL' ORDER BY failure_risk_score DESC" -c localstack
+
+.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug generate setup-alerts send-alert demo-critical demo-alerts test-alert check-emails check-critical
