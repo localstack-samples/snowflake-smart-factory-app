@@ -2,14 +2,7 @@
 USE DATABASE FACTORY_PIPELINE_DEMO;
 USE SCHEMA PUBLIC;
 
--- Create alerts log table
-CREATE TABLE IF NOT EXISTS ALERT_LOG (
-    alert_id NUMBER AUTOINCREMENT,
-    total_critical_machines NUMBER,
-    email_sent BOOLEAN DEFAULT FALSE,
-    message_id VARCHAR(100),
-    alert_timestamp TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
-);
+
 
 -- UDF to send email report with critical machines data passed as parameter
 CREATE OR REPLACE FUNCTION send_critical_machines_report(critical_machines_json VARCHAR)
@@ -205,17 +198,22 @@ SELECT
 FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics
 WHERE health_status = 'CRITICAL';
 
--- Simple wrapper function that gets critical machines and sends alert
-CREATE OR REPLACE FUNCTION send_alert_from_db()
-RETURNS VARIANT
-LANGUAGE SQL
-AS $$
+-- Create or replace the automated alert task (direct call)
+CREATE OR REPLACE TASK automated_critical_alert_task
+WAREHOUSE = 'test'
+SCHEDULE = '30 SECONDS'
+AS
     SELECT 
         CASE 
             WHEN machines_data IS NULL OR machines_data = '' THEN 
-                send_critical_machines_report('')
+                FACTORY_PIPELINE_DEMO.PUBLIC.send_critical_machines_report('')
             ELSE 
-                send_critical_machines_report(machines_data)
-        END as alert_result
-    FROM critical_machines_list
-$$; 
+                FACTORY_PIPELINE_DEMO.PUBLIC.send_critical_machines_report(machines_data)
+        END
+    FROM FACTORY_PIPELINE_DEMO.PUBLIC.critical_machines_list;
+
+-- Resume the task to start scheduled execution
+ALTER TASK automated_critical_alert_task RESUME;
+
+-- Show task status
+SHOW TASKS LIKE 'automated_critical_alert_task'; 
