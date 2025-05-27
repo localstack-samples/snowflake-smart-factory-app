@@ -83,7 +83,7 @@ def create_gauge_chart(value, title, min_val, max_val, threshold_ranges):
         title = {'text': title},
         gauge = {
             'axis': {'range': [min_val, max_val]},
-            'bar': {'color': "darkblue"},
+            'bar': {'color': "#6179ED"},
             'steps': [
                 {'range': threshold_ranges[0], 'color': colors[0]},
                 {'range': threshold_ranges[1], 'color': colors[1]},
@@ -121,7 +121,7 @@ def create_time_series(df, machine_id, metric, anomaly_threshold=None):
         y=machine_data[metric],
         name=metric.title(),
         mode='lines',
-        line=dict(color='blue'),
+        line=dict(color='#6179ED'),
         hovertemplate=
         '<b>Time</b>: %{x}<br>' +
         '<b>Value</b>: %{y:.2f}<br>'
@@ -135,7 +135,7 @@ def create_time_series(df, machine_id, metric, anomaly_threshold=None):
             y=anomalies[metric],
             mode='markers',
             name='Anomalies',
-            marker=dict(color='red', size=8, symbol='circle'),
+            marker=dict(color='#e9041e', size=8, symbol='circle'),
             hovertemplate=
             '<b>Anomaly</b><br>' +
             '<b>Time</b>: %{x}<br>' +
@@ -164,7 +164,7 @@ st.markdown("""
         background-color: #1E2022;
         padding: 15px;
         border-radius: 8px;
-        border: 1px solid #2E3236;
+        border: 1px solid #9361f7;
         min-height: 120px;  /* Fixed height for all metric cards */
     }
     .stMetric:hover {
@@ -172,7 +172,7 @@ st.markdown("""
         border-color: #3E4246;
     }
     .stMetric [data-testid="stMetricLabel"] {
-        color: #E0E2E6 !important;
+        color: #AC85FA !important;
         font-size: 1rem !important;
     }
     .stMetric [data-testid="stMetricValue"] {
@@ -180,7 +180,7 @@ st.markdown("""
         font-size: 2rem !important;
     }
     .stMetric [data-testid="stMetricDelta"] {
-        color: #B0B2B6 !important;
+        color: #AC85FA !important;
     }
     .stProgress .st-bo {
         background-color: #00ff00;
@@ -325,7 +325,7 @@ try:
                     names=status_counts.index, 
                     title="Health Status Distribution",
                     color_discrete_map={
-                        'HEALTHY': '#00ff00',
+                        'HEALTHY': '#AC85FA',
                         'NEEDS_MAINTENANCE': '#ffa500',
                         'CRITICAL': '#ff0000'
                     })
@@ -340,7 +340,7 @@ try:
                     color='health_status',
                     title="Failure Risk Scores by Machine",
                     color_discrete_map={
-                        'HEALTHY': '#00ff00',
+                        'HEALTHY': 'green',
                         'NEEDS_MAINTENANCE': '#ffa500',
                         'CRITICAL': '#ff0000'
                     })

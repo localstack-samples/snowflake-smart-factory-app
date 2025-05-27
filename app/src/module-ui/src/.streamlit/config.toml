@@ -1,2 +1,12 @@
 [server]
 runOnSave = true
+enableStaticServing = true
+[theme]
+font = "sans-serif"
+base = "dark"
+primaryColor = "#AC85FA"
+backgroundColor = "#101114"
+secondaryBackgroundColor = "#4d0dcf"
+textColor = "#eaeaf0"
+linkColor = "#AC85FA"
+borderColor = "#9361f7"
