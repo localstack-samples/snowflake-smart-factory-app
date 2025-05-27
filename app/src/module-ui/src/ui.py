@@ -340,7 +340,7 @@ try:
                     color='health_status',
                     title="Failure Risk Scores by Machine",
                     color_discrete_map={
-                        'HEALTHY': '#AC85FA',
+                        'HEALTHY': 'green',
                         'NEEDS_MAINTENANCE': '#ffa500',
                         'CRITICAL': '#ff0000'
                     })
