@@ -2,6 +2,8 @@ version: 2
 
 models:
   - name: sensor_readings_view
+    tests:
+      - table_not_empty
     description: "Cleaned and validated sensor readings"
     columns:
       - name: machine_id

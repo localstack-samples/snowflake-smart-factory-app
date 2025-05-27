@@ -3,6 +3,8 @@ export AWS_SECRET_ACCESS_KEY ?= test
 export AWS_DEFAULT_REGION=us-east-1
 SHELL := /bin/bash
 
+# Flag to control which batch file to upload (default: false = use batch 1, true = use latest batch)
+LATEST ?= false
 
 check:			## Check if all required prerequisites are installed
 	@echo "Checking if all required prerequisites are installed..."
@@ -36,9 +38,18 @@ aws:			## Setup AWS resources
 	bash -c "source env/bin/activate && python setup/02_configure_s3_bucket.py"
 	@echo "AWS resources setup successfully."
 
-upload:			## Upload files to S3
+generate:		## Generate new sensor data batch
+	@echo "Generating new sensor data batch..."
+	bash -c "source env/bin/activate && python bin/data_generator.py"
+	@echo "New sensor data batch generated successfully."
+
+upload:			## Upload files to S3 (use LATEST=true to upload highest batch number)
 	@echo "Uploading files to S3..."
+ifeq ($(LATEST),true)
+	bash -c "source env/bin/activate && python setup/03_upload_file.py --latest"
+else
 	bash -c "source env/bin/activate && python setup/03_upload_file.py"
+endif
 	@echo "Files uploaded successfully."
 
 pipeline:		## Setup Dagster pipeline
@@ -62,8 +73,16 @@ deploy:			## Deploy the entire stack
 	make aws
 	make upload
 	make dbt
-	make app
-	@echo "Deployment completed successfully."
+	@echo "Deployment completed successfully. Run 'make app' to view the app."
+
+debug:			## Clean up everything and redeploy to fix bugs
+	@echo "Running debug cleanup and redeploy..."
+	snow sql -c localstack -q "USE DATABASE FACTORY_PIPELINE_DEMO; USE SCHEMA PUBLIC; DROP FILE FORMAT IF EXISTS csv_format;"
+	snow sql -c localstack -q "DROP PIPE IF EXISTS FACTORY_PIPELINE_DEMO.PUBLIC.SENSOR_DATA_PIPE;"
+	snow sql -c localstack -q "DROP TABLE IF EXISTS FACTORY_PIPELINE_DEMO.PUBLIC_RAW.SENSOR_DATA;"
+	awslocal s3 rb s3://factory-sensor-data-local --force
+	make deploy
+	@echo "Debug cleanup and redeploy completed successfully."
 
 test:			## Run tests
 	@echo "Running tests..."
@@ -91,4 +110,4 @@ ready:			## Make sure the LocalStack container is up
 logs:			## Save the logs in a separate file
 		@localstack logs > logs.txt
 
-.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs
+.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug generate

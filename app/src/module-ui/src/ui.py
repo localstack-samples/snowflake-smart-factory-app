@@ -6,7 +6,7 @@ from snowflake.snowpark.context import get_active_session
 import numpy as np
 from datetime import datetime, timedelta
 
-def load_machine_health_data(conn):
+def load_machine_health_data(conn, show_debug=False):
     """Load machine health data from Snowflake"""
     try:
         # Get the data using SQL query with correct schema name
@@ -18,7 +18,7 @@ def load_machine_health_data(conn):
         
         # Get column names from cursor description
         columns = [desc[0].lower() for desc in cur.description]
-        if "debug" in st.query_params and st.query_params["debug"] == "true":
+        if show_debug:
             st.write("Debug - Available columns:", columns)
         
         # Fetch all data and create DataFrame
@@ -26,7 +26,7 @@ def load_machine_health_data(conn):
         df = pd.DataFrame(data, columns=columns)
         
         # Debug output
-        if "debug" in st.query_params and st.query_params["debug"] == "true":
+        if show_debug:
             st.write("Debug - Data shape:", df.shape)
             st.write("Debug - First few rows:", df.head())
         
@@ -257,17 +257,21 @@ st.markdown("""
 st.title("🏭 Smart Factory Health Monitor")
 st.markdown("Real-time monitoring and analytics dashboard for smart factory operations")
 
+# Debug toggle
+show_debug = st.checkbox("Show Debug Info", value=False)
+
 try:
+    
     # Create Snowflake connection
     conn = st.connection("snowflake")
     # conn = get_active_session()
     
     # Debug connection info
-    if "debug" in st.query_params and st.query_params["debug"] == "true":
+    if show_debug:
         st.write("Debug - Connection established:", bool(conn))
     
     # Load data
-    health_data = load_machine_health_data(conn)
+    health_data = load_machine_health_data(conn, show_debug)
     if health_data.empty:
         st.warning("No machine health data available.")
         st.stop()
