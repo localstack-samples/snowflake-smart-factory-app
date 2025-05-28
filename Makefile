@@ -84,6 +84,12 @@ debug:			## Clean up everything and redeploy to fix bugs
 	make deploy
 	@echo "Debug cleanup and redeploy completed successfully."
 
+alerts:			## Setup alerts
+	@echo "Setting up alerts..."
+	awslocal ses verify-email-identity --email hello@example.com
+	snow sql -f solutions/task_alert_udf.sql -c localstack
+	@echo "Alerts setup successfully."
+
 test:			## Run tests
 	@echo "Running tests..."
 	bash -c "source env/bin/activate && pytest tests/"
