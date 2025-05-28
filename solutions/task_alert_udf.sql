@@ -1,6 +1,25 @@
--- Simple Alert System: One UDF that sends email report of all critical machines
+-- =====================================================
+-- SMART FACTORY AUTOMATED ALERTING SYSTEM
+-- =====================================================
+-- This demo showcases real-time critical machine alerting using:
+-- • Snowflake Tasks for automated scheduling
+-- • Python UDFs with SES email integration
+-- • Real-time database queries for critical machine detection
+-- 
+-- Target: FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics
+-- Alert Frequency: Every 30 seconds (configurable)
+-- Email Service: LocalStack SES
+-- =====================================================
+
+-- Set context
 USE DATABASE FACTORY_PIPELINE_DEMO;
 USE SCHEMA PUBLIC;
+
+-- =====================================================
+-- PART 1: EMAIL ALERT FUNCTION
+-- =====================================================
+-- Python UDF that sends professional email alerts via SES
+-- when critical machines are detected in the factory
 
 -- UDF to send email report with critical machines data passed as parameter
 CREATE OR REPLACE FUNCTION send_critical_machines_report(critical_machines_json VARCHAR)
@@ -16,10 +35,10 @@ from datetime import datetime
 
 def send_report(critical_machines_json):
     try:
-        # LocalStack SES configuration
+        # LocalStack SES configuration for email delivery
         endpoint_url = "http://localhost:4566"
         
-        # Configure SES client
+        # Configure SES client for LocalStack
         ses_client = boto3.client(
             "ses",
             endpoint_url=endpoint_url,
@@ -28,7 +47,7 @@ def send_report(critical_machines_json):
             region_name="us-east-1"
         )
         
-        # Email configuration
+        # Email configuration - sender and recipient
         sender_email = "hello@example.com"
         recipient_email = "maintenance@localsmartfactory.com"
         
@@ -39,7 +58,7 @@ def send_report(critical_machines_json):
         except:
             pass  # Identities might already be verified
         
-        # Parse the critical machines data passed as pipe-delimited string
+        # Parse the critical machines data from pipe-delimited string
         # Format: machine_id|risk_score|issue;machine_id|risk_score|issue;...
         critical_machines = []
         try:
@@ -58,6 +77,7 @@ def send_report(critical_machines_json):
             # Fallback to empty list if parsing fails
             critical_machines = []
         
+        # Exit early if no critical machines found
         if not critical_machines:
             return {
                 "status": "success",
@@ -66,17 +86,17 @@ def send_report(critical_machines_json):
                 "timestamp": datetime.now().isoformat()
             }
         
-        # Create email content
+        # Create professional email content
         subject = f"CRITICAL ALERT: {len(critical_machines)} Machines Require Immediate Attention"
         
-        # Text version
+        # Plain text version for email clients that don't support HTML
         body_text = f"""CRITICAL MACHINES ALERT REPORT
 
-            Total Critical Machines: {len(critical_machines)}
-            Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Total Critical Machines: {len(critical_machines)}
+Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-            CRITICAL MACHINES:
-         """
+CRITICAL MACHINES:
+"""
         
         for machine in critical_machines:
             body_text += f"""
@@ -93,6 +113,7 @@ Smart Factory Health Monitor
 Powered by LocalStack + Snowflake
         """
         
+        # Professional HTML version with styling
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         machine_count = len(critical_machines)
         
@@ -119,6 +140,7 @@ Powered by LocalStack + Snowflake
                 </tr>
         """
         
+        # Add each critical machine to the HTML table
         for machine in critical_machines:
             body_html += """
                 <tr>
@@ -142,7 +164,7 @@ Powered by LocalStack + Snowflake
         </html>
         """
         
-        # Send email via SES
+        # Send the email via LocalStack SES
         response = ses_client.send_email(
             Source=sender_email,
             Destination={
@@ -166,6 +188,7 @@ Powered by LocalStack + Snowflake
             }
         )
         
+        # Return success response with email details
         return {
             "status": "success",
             "total_critical_machines": len(critical_machines),
@@ -177,6 +200,7 @@ Powered by LocalStack + Snowflake
         }
         
     except Exception as e:
+        # Return error response if email sending fails
         return {
             "status": "error",
             "error": str(e),
@@ -185,7 +209,12 @@ Powered by LocalStack + Snowflake
         }
 $$;
 
--- Simple view to get critical machines as a concatenated string
+-- =====================================================
+-- PART 2: DATA QUERY VIEW
+-- =====================================================
+-- View that queries critical machines and formats data for the UDF
+-- Uses LISTAGG to create pipe-delimited string format
+
 CREATE OR REPLACE VIEW critical_machines_list AS
 SELECT 
     LISTAGG(
@@ -197,7 +226,12 @@ SELECT
 FROM FACTORY_PIPELINE_DEMO.PUBLIC_marts.machine_health_metrics
 WHERE health_status = 'CRITICAL';
 
--- Create or replace the automated alert task (direct call)
+-- =====================================================
+-- PART 3: AUTOMATED TASK SCHEDULER
+-- =====================================================
+-- Snowflake Task that runs every 30 seconds to check for critical machines
+-- and automatically sends email alerts when found
+
 CREATE OR REPLACE TASK automated_critical_alert_task
 WAREHOUSE = 'test'
 SCHEDULE = '30 SECONDS'
@@ -211,8 +245,16 @@ AS
         END
     FROM FACTORY_PIPELINE_DEMO.PUBLIC.critical_machines_list;
 
--- Resume the task to start scheduled execution
+-- =====================================================
+-- PART 4: ACTIVATE THE SYSTEM
+-- =====================================================
+-- Resume the task to start automated alert monitoring
+
 ALTER TASK automated_critical_alert_task RESUME;
 
--- Show task status
+-- =====================================================
+-- PART 5: SYSTEM STATUS CHECK
+-- =====================================================
+-- Verify the automated alerting system is running
+
 SHOW TASKS LIKE 'automated_critical_alert_task'; 
