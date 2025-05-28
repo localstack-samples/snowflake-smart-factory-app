@@ -2,8 +2,6 @@
 USE DATABASE FACTORY_PIPELINE_DEMO;
 USE SCHEMA PUBLIC;
 
-
-
 -- UDF to send email report with critical machines data passed as parameter
 CREATE OR REPLACE FUNCTION send_critical_machines_report(critical_machines_json VARCHAR)
 RETURNS VARIANT
@@ -32,7 +30,7 @@ def send_report(critical_machines_json):
         
         # Email configuration
         sender_email = "hello@example.com"
-        recipient_email = "maintenance-team@smartfactory.com"
+        recipient_email = "maintenance@localsmartfactory.com"
         
         # Verify email identities (auto-verified in LocalStack)
         try:
@@ -69,17 +67,16 @@ def send_report(critical_machines_json):
             }
         
         # Create email content
-        subject = f"🚨 CRITICAL ALERT: {len(critical_machines)} Machines Require Immediate Attention"
+        subject = f"CRITICAL ALERT: {len(critical_machines)} Machines Require Immediate Attention"
         
         # Text version
-        body_text = f"""
-CRITICAL MACHINES ALERT REPORT
+        body_text = f"""CRITICAL MACHINES ALERT REPORT
 
-Total Critical Machines: {len(critical_machines)}
-Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            Total Critical Machines: {len(critical_machines)}
+            Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-CRITICAL MACHINES:
-"""
+            CRITICAL MACHINES:
+         """
         
         for machine in critical_machines:
             body_text += f"""
@@ -96,18 +93,20 @@ Smart Factory Health Monitor
 Powered by LocalStack + Snowflake
         """
         
-        # HTML version
-        body_html = f"""
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        machine_count = len(critical_machines)
+        
+        body_html = """
         <html>
         <head></head>
         <body>
-            <h2 style="color: #d32f2f;">🚨 CRITICAL MACHINES ALERT REPORT</h2>
+            <h2 style="color: #d32f2f;">CRITICAL MACHINES ALERT REPORT</h2>
             
             <div style="background-color: #ffebee; padding: 15px; border-left: 4px solid #d32f2f; margin: 10px 0;">
                 <h3>Summary</h3>
                 <ul>
-                    <li><strong>Total Critical Machines:</strong> {len(critical_machines)}</li>
-                    <li><strong>Report Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</li>
+                    <li><strong>Total Critical Machines:</strong> """ + str(machine_count) + """</li>
+                    <li><strong>Report Generated:</strong> """ + current_time + """</li>
                 </ul>
             </div>
             
@@ -121,11 +120,11 @@ Powered by LocalStack + Snowflake
         """
         
         for machine in critical_machines:
-            body_html += f"""
+            body_html += """
                 <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">{machine['machine_id']}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px; color: #d32f2f;">{machine['risk_score']}%</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{machine['issue']}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">""" + str(machine['machine_id']) + """</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; color: #d32f2f;">""" + str(machine['risk_score']) + """%</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">""" + str(machine['issue']) + """</td>
                 </tr>
             """
         
