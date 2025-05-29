@@ -97,9 +97,9 @@ make deploy
 This will:
 
 - Setup Snowflake database, tables, and Snowpipe
-- Setup S3 bucket with event notifications.
+- Setup S3 bucket with event notifications
 - Upload sample sensor data (`data/sensor_data_batch_1.csv`)
-- Run dbt transformations to process the data.
+- Run dbt transformations to process the data
 
 You can also run the following command to deploy the Native app:
 
@@ -127,6 +127,11 @@ You can run full end-to-end integration tests using the following command:
 ```bash
 make test
 ```
+
+This executes:
+
+- **Machine Health Tests**: Verifies health metrics calculations and thresholds
+- **Snowpipe Integration Tests**: Tests automated data ingestion workflows
 
 ## Use Cases
 
@@ -168,9 +173,10 @@ make alerts
 
 This will:
 
-- Create a Python UDF to send email alerts
-- Create a Snowflake Task to trigger the UDF on a schedule
-- Create a Snowflake View to query the alert data
+- Create a Python UDF to send email alerts with SES integration
+- Create a Snowflake Task to trigger the UDF every 30 seconds
+- Create a Snowflake View to query critical machine data
+- Send HTML emails for critical machine conditions
 
 In 30 seconds, you can query the SES developer endpoint to see the alert email:
 
