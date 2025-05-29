@@ -65,7 +65,10 @@ dbt:			## Run dbt models
 app:			## Run Snowflake Native App
 	@echo "Running app..."
 	cd app && snow app run -c localstack
-	@echo "App is now accessible at https://snowflake.localhost.localstack.cloud:4566/apps/test/test/FACTORY_APP_HARSHCASPER/"
+	@echo ""
+	@echo "[●] Deployed on LocalStack"
+	@printf " └─ URL: \033[4;94mhttps://snowflake.localhost.localstack.cloud:4566/apps/test/test/FACTORY_APP_$$(whoami | tr '[:lower:]' '[:upper:]')/\033[0m\n"
+	@echo ""
 
 deploy:			## Deploy the entire stack
 	@echo "Deploying the entire stack..."

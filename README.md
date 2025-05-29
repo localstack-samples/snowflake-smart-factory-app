@@ -110,7 +110,8 @@ make app
 The output will be similar to the following:
 
 ```bash
-App is now accessible at https://snowflake.localhost.localstack.cloud:4566/apps/test/test/FACTORY_APP_HARSHCASPER/
+[●] Deployed on LocalStack
+ └─ URL: https://snowflake.localhost.localstack.cloud:4566/apps/test/test/FACTORY_APP_{USER}/
 ```
 
 The dashboard provides:
