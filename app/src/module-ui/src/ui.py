@@ -493,7 +493,6 @@ except Exception as e:
     st.error(f"Error in application: {str(e)}")
     st.info("Make sure LocalStack is running and the Snowflake emulator is properly configured.")
 
-# Move this outside the try-except block, at the very end of the file
 st.markdown("""
     <div class="custom-footer">
         <p>Built with ❤️ by LocalStack</p>

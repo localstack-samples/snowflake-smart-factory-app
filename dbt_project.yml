@@ -29,5 +29,5 @@ models:
       +schema: marts
 
 vars:
-  'sensor_reading_threshold': 100  # Example threshold for sensor readings
-  'machine_health_window': 24  # Hours to consider for health metrics
+  'sensor_reading_threshold': 100
+  'machine_health_window': 24

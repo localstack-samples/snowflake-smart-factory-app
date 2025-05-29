@@ -35,10 +35,8 @@ from datetime import datetime
 
 def send_report(critical_machines_json):
     try:
-        # LocalStack SES configuration for email delivery
         endpoint_url = "http://localhost:4566"
         
-        # Configure SES client for LocalStack
         ses_client = boto3.client(
             "ses",
             endpoint_url=endpoint_url,
@@ -47,19 +45,15 @@ def send_report(critical_machines_json):
             region_name="us-east-1"
         )
         
-        # Email configuration - sender and recipient
         sender_email = "hello@example.com"
         recipient_email = "maintenance@localsmartfactory.com"
         
-        # Verify email identities (auto-verified in LocalStack)
         try:
             ses_client.verify_email_identity(EmailAddress=sender_email)
             ses_client.verify_email_identity(EmailAddress=recipient_email)
         except:
-            pass  # Identities might already be verified
+            pass
         
-        # Parse the critical machines data from pipe-delimited string
-        # Format: machine_id|risk_score|issue;machine_id|risk_score|issue;...
         critical_machines = []
         try:
             if critical_machines_json and critical_machines_json.strip():
@@ -74,10 +68,8 @@ def send_report(critical_machines_json):
                                 "issue": parts[2] if parts[2] else "Immediate maintenance required"
                             })
         except Exception as e:
-            # Fallback to empty list if parsing fails
             critical_machines = []
         
-        # Exit early if no critical machines found
         if not critical_machines:
             return {
                 "status": "success",
@@ -86,10 +78,8 @@ def send_report(critical_machines_json):
                 "timestamp": datetime.now().isoformat()
             }
         
-        # Create professional email content
         subject = f"CRITICAL ALERT: {len(critical_machines)} Machines Require Immediate Attention"
         
-        # Plain text version for email clients that don't support HTML
         body_text = f"""CRITICAL MACHINES ALERT REPORT
 
 Total Critical Machines: {len(critical_machines)}
@@ -113,7 +103,6 @@ Smart Factory Health Monitor
 Powered by LocalStack + Snowflake
         """
         
-        # Professional HTML version with styling
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         machine_count = len(critical_machines)
         
@@ -140,7 +129,6 @@ Powered by LocalStack + Snowflake
                 </tr>
         """
         
-        # Add each critical machine to the HTML table
         for machine in critical_machines:
             body_html += """
                 <tr>
@@ -164,7 +152,6 @@ Powered by LocalStack + Snowflake
         </html>
         """
         
-        # Send the email via LocalStack SES
         response = ses_client.send_email(
             Source=sender_email,
             Destination={
@@ -188,7 +175,6 @@ Powered by LocalStack + Snowflake
             }
         )
         
-        # Return success response with email details
         return {
             "status": "success",
             "total_critical_machines": len(critical_machines),
@@ -200,7 +186,6 @@ Powered by LocalStack + Snowflake
         }
         
     except Exception as e:
-        # Return error response if email sending fails
         return {
             "status": "error",
             "error": str(e),
