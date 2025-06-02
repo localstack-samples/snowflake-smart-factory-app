@@ -121,6 +121,7 @@ jobs:
 
       - name: Run Tests
         run: |
+          pip3 install pytest pandas numpy
           pytest tests/
 
       - name: Show LocalStack Logs
