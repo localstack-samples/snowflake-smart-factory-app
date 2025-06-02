@@ -20,24 +20,7 @@ The application serves as a complete reference implementation for developing Sno
 
 The application implements a modern data pipeline architecture showcasing a realistic smart factory scenario:
 
-```
-┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│   Data Sources  │───▶│  S3 Bucket   │───▶│   Snowpipe      │
-│  (CSV Sensors)  │    │ (LocalStack) │    │  (Auto-Ingest)  │
-└─────────────────┘    └──────────────┘    └─────────────────┘
-                                                     │
-                                                     ▼
-┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│   Streamlit     │◀───│     dbt      │◀───│   Snowflake     │
-│   Dashboard     │    │ Transformations│   │   Emulator      │
-└─────────────────┘    └──────────────┘    └─────────────────┘
-         │                       │                   │
-         ▼                       ▼                   ▼
-┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│  Native App     │    │   Dagster    │    │  Email Alerts   │
-│  (Snowflake)    │    │  Pipeline    │    │     (SES)       │
-└─────────────────┘    └──────────────┘    └─────────────────┘
-```
+![Architecture](./images/architecture-diagram.png)
 
 ## Prerequisites
 
