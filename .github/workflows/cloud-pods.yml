@@ -93,7 +93,7 @@ jobs:
 
   test-cloud-pod:
     name: Test Cloud Pod
-    needs: create-cloud-pod
+    # needs: create-cloud-pod
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -121,7 +121,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          pip3 install pytest pandas numpy
+          pip3 install pytest pandas numpy snowflake-connector-python
           pytest tests/
 
       - name: Show LocalStack Logs
