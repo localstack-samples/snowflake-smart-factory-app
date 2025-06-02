@@ -201,6 +201,32 @@ This showcases:
 - Point-in-time recovery scenarios
 - Disaster recovery best practices
 
+### Test Data Management with Cloud Pods
+
+Cloud Pods enable persistent state snapshots of your LocalStack instance that can be easily stored, versioned, shared, and restored across development teams and CI/CD environments.
+
+To save a Cloud Pod, run the following command:
+
+```bash
+localstack pod save smart-factory-app
+```
+
+To load a Cloud Pod, run the following command:
+
+```bash
+# Restore the saved state in a fresh LocalStack instance
+localstack pod load smart-factory-app
+```
+
+The key advantages are:
+
+- Pre-seed CI environments with complex factory data, Snowflake schemas, and S3 assets in seconds
+- Share identical test scenarios across development teams for consistent debugging
+- Guarantee the same test data state across different pipeline runs and environments  
+- Capture problematic states for collaborative debugging and issue reproduction
+
+For automated Cloud Pods management in CI/CD pipelines, check out the sample workflow in [`.github/workflows/cloud-pods.yml`](.github/workflows/cloud-pods.yml).
+
 ## License
 
 This project is licensed under the [Apache License 2.0](LICENSE).
