@@ -25,3 +25,5 @@ app/output/
 .terraform/
 .terraform.lock.hcl
 terraform.tfstate
+
+.DS_Store

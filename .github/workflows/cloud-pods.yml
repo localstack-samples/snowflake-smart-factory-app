@@ -1,0 +1,139 @@
+name: Create and Test Cloud Pods
+
+on:
+  schedule:
+    # At 00:00 on Saturday.
+    - cron: "0 0 * * 6"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  create-cloud-pod:
+    name: Create Cloud Pods
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' 
+
+      - name: Install Snow CLI
+        run: |
+          pip install snowflake-cli==3.7.2
+          snow --version
+          snow connection add \
+            --connection-name localstack \
+            --user test \
+            --password test \
+            --account test \
+            --role test \
+            --warehouse test \
+            --database test \
+            --schema test \
+            --port 4566 \
+            --host snowflake.localhost.localstack.cloud \
+            --no-interactive
+          snow connection list
+
+      - name: Install dependencies
+        run: |
+          make install
+
+      - name: Start LocalStack
+        uses: LocalStack/setup-localstack@main
+        with:
+          image-tag: 'latest'
+          use-pro: 'true'
+          configuration: LS_LOG=trace
+          install-awslocal: 'true'
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+          IMAGE_NAME: localstack/snowflake:latest
+
+      - name: Create Snowflake resources
+        run: |
+          make seed
+
+      - name: Create AWS resources
+        run: |
+          make aws
+          make upload
+
+      - name: Run dbt models
+        run: |
+          make dbt
+
+      - name: Deploy Native App
+        run: |
+          make app
+
+      - name: Create Cloud Pod
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+        run: |
+          message="Cloud Pod created: smart-factory-app on $(date) with workflow run id: ${{ github.run_id }}"
+          localstack pod save smart-factory-app --message "$message"
+
+      - name: Show LocalStack Logs
+        if: always()
+        run: |
+          localstack logs
+
+  test-cloud-pod:
+    name: Test Cloud Pod
+    needs: create-cloud-pod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Start LocalStack
+        uses: LocalStack/setup-localstack@main
+        with:
+          use-pro: 'true'
+          install-awslocal: 'true'
+        env:
+          DEBUG: 1
+          IMAGE_NAME: localstack/snowflake:latest
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+
+      - name: Load Cloud Pod
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+        run: |
+          localstack pod load smart-factory-app
+
+      - name: Install dependencies
+        run: |
+          make install
+
+      - name: Run Tests
+        run: |
+          pip3 install pytest pandas numpy snowflake-connector-python
+          pytest tests/
+
+      - name: Show LocalStack Logs
+        if: always()
+        run: |
+          localstack logs
+
+      - name: Generate a Diagnostic Report
+        if: failure()
+        run: |
+          curl -s localhost:4566/_localstack/diagnose | gzip -cf > diagnose.json.gz
+
+      - name: Upload the Diagnostic Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnose.json.gz
+          path: ./diagnose.json.gz

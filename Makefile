@@ -1,6 +1,7 @@
 export AWS_ACCESS_KEY_ID ?= test
 export AWS_SECRET_ACCESS_KEY ?= test
 export AWS_DEFAULT_REGION=us-east-1
+export DBT_WARN_ERROR_OPTIONS={"silence": ["UnusedResourceConfigPath", "NoNodesForSelectionCriteria"]}
 SHELL := /bin/bash
 
 # Flag to control which batch file to upload (default: false = use batch 1, true = use latest batch)
@@ -59,13 +60,21 @@ pipeline:		## Setup Dagster pipeline
 
 dbt:			## Run dbt models
 	@echo "Running dbt..."
-	bash -c "source env/bin/activate && dbt build --profile localstack"
+	bash -c "source env/bin/activate && dbt run --profile localstack"
 	@echo "Dbt run successfully."
 
 app:			## Run Snowflake Native App
 	@echo "Running app..."
 	cd app && snow app run -c localstack
-	@echo "App is now accessible at https://snowflake.localhost.localstack.cloud:4566/apps/test/test/FACTORY_APP_HARSHCASPER/"
+	@echo ""
+	@echo "[●] Deployed on LocalStack"
+	@printf " └─ URL: \033[4;94mhttps://snowflake.localhost.localstack.cloud:4566/apps/test/test/FACTORY_APP_$$(whoami | tr '[:lower:]' '[:upper:]')/\033[0m\n"
+	@echo ""
+
+streamlit:		## Run Streamlit app
+	@echo "Running Streamlit app..."
+	cd app/src/module-ui/src && streamlit run ui.py
+	@echo "Streamlit app run successfully."
 
 deploy:			## Deploy the entire stack
 	@echo "Deploying the entire stack..."
@@ -84,8 +93,17 @@ debug:			## Clean up everything and redeploy to fix bugs
 	make deploy
 	@echo "Debug cleanup and redeploy completed successfully."
 
+alerts:			## Setup alerts
+	@echo "Setting up alerts..."
+	awslocal ses verify-email-identity --email hello@example.com
+	snow sql -f solutions/task_alert_udf.sql -c localstack
+	@echo "Alerts setup successfully."
+
 test:			## Run tests
 	@echo "Running tests..."
+	@echo "Running dbt tests..."
+	bash -c "source env/bin/activate && dbt test --profile localstack"
+	@echo "Running pytest integration tests..."
 	bash -c "source env/bin/activate && pytest tests/"
 	@echo "Tests run successfully."
 
