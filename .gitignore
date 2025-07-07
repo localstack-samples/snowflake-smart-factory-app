@@ -20,4 +20,10 @@ __pycache__
 # Native App
 
 app/output/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+
 .DS_Store
