@@ -24,12 +24,7 @@ The application implements a modern data pipeline architecture showcasing a real
 
 ## Prerequisites
 
-Features in this sample app require a LocalStack for Snowflake license - make sure your Auth Token is configured in your terminal session.
-
-```bash
-export LOCALSTACK_AUTH_TOKEN=<your-token>
-```
-
+- A valid [LocalStack for Snowflake license](https://localstack.cloud/pricing). Your license provides a `LOCALSTACK_AUTH_TOKEN` to activate LocalStack.
 - [Docker](https://docs.docker.com/get-docker/)
 - [`localstack` CLI](https://docs.localstack.cloud/getting-started/installation/#localstack-cli).
 - [AWS CLI](https://docs.localstack.cloud/user-guide/integrations/aws-cli/) with the [`awslocal` wrapper](https://docs.localstack.cloud/user-guide/integrations/aws-cli/#localstack-aws-cli-awslocal).
