@@ -109,6 +109,7 @@ test:			## Run tests
 
 start:			## Start LocalStack
 	@echo "Starting LocalStack..."
+	@test -n "${LOCALSTACK_AUTH_TOKEN}" || (echo "LOCALSTACK_AUTH_TOKEN is not set. Find your token at https://app.localstack.cloud/workspace/auth-token"; exit 1)
 	DOCKER_FLAGS='-e SF_LOG=trace' \
 	DEBUG=1 \
 	IMAGE_NAME=localstack/snowflake:latest \
