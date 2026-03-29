@@ -59,6 +59,8 @@ jobs:
       - name: Install dependencies
         run: |
           make install
+          source env/bin/activate
+          dbt debug --profiles-dir . --profile localstack
 
       - name: Create Snowflake resources
         run: |
