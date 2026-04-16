@@ -99,6 +99,8 @@ The dashboard provides:
 - Predictive maintenance recommendations
 - Anomaly detection and alerting
 
+> **Known issue:** `make app` currently fails on the LocalStack Snowflake emulator with `Unknown function INTERNAL$TO_CHAR` when `snow app run` tries to initialise the application package database. See [Known LocalStack Limitations](#known-localstack-limitations) for details and the tracking status.
+
 ## Testing
 
 You can run full end-to-end integration tests using the following command:
@@ -204,6 +206,15 @@ The key advantages are:
 - Capture problematic states for collaborative debugging and issue reproduction
 
 For automated Cloud Pods management in CI/CD pipelines, check out the sample workflow in [`.github/workflows/cloud-pods.yml`](.github/workflows/cloud-pods.yml).
+
+## Known LocalStack Limitations
+
+The core data pipeline (Snowpipe configuration → S3 ingestion → dbt models → pytest/dbt tests) is fully functional against `localstack/snowflake:latest` (tested on April 2026). Two bugs in the LocalStack Snowflake emulator affect advanced behaviour and are worked around or disabled in this repo until they are fixed upstream:
+
+1. **Snowpipe auto-ingest does not execute `COPY` for new S3 objects.** The emulator creates the internal SQS queue (`sf-snowpipe-<ACCOUNT>`), delivers S3 `ObjectCreated` events to it, and the `PipeRunner` worker consumes them — but the auto-generated query rewrites the `FROM` clause to `@stage/<file>.csv`, which returns zero rows in the emulator's COPY implementation. As a workaround, `setup/03_upload_file.py` runs a scoped `COPY INTO ... FROM @SENSOR_DATA_STAGE PATTERN='.*<filename>'` immediately after each S3 upload, which mirrors what Snowpipe would do in real Snowflake. The `PIPE` object itself is still created so `SHOW PIPES` / `DESC PIPE` keep working.
+2. **`make app` fails with `Unknown function INTERNAL$TO_CHAR`.** `snow app run -c localstack` starts by running internal `USE DATABASE` / stage-creation queries against the newly created application-package database (e.g. `factory_app_pkg_<user>`) and those queries call the internal `INTERNAL$TO_CHAR` helper. The function is registered on the default `FACTORY_PIPELINE_DEMO` database but not on databases that `snow app` creates implicitly, so the call blows up before any app artefacts are staged. `make app` is therefore skipped in the CI workflow; the Streamlit UI code under `app/` is still authored the same way as for real Snowflake, so the target will work again once the emulator registers utility functions for application-package databases.
+
+If you hit these issues in your own experiments, please file them against the LocalStack Snowflake emulator with the repro steps from this repo.
 
 ## License
 
