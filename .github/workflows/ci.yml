@@ -73,9 +73,14 @@ jobs:
         run: |
           make dbt
 
-      - name: Deploy Native App
-        run: |
-          make app
+      # Native App deployment (`make app`) is temporarily disabled pending a
+      # LocalStack Snowflake emulator fix - `snow app run` triggers an
+      # `Unknown function INTERNAL$TO_CHAR` error while creating the
+      # application package database. Track the upstream issue before
+      # re-enabling this step.
+      # - name: Deploy Native App
+      #   run: |
+      #     make app
 
       - name: Run tests
         run: |

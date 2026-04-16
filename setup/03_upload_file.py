@@ -1,14 +1,28 @@
-import boto3
-import time
 import argparse
-import os
 import glob
+import os
 import re
+import time
 
-# Configuration
+import boto3
+import snowflake.connector
+
 S3_ENDPOINT_URL = "http://localhost:4566"
 S3_BUCKET_NAME = "factory-sensor-data-local"
 DEFAULT_FILE_PATH = "data/sensor_data_batch_1.csv"
+
+SNOWFLAKE_CONFIG = {
+    "account": "test",
+    "user": "test",
+    "password": "test",
+    "database": "FACTORY_PIPELINE_DEMO",
+    "schema": "PUBLIC",
+    "host": "snowflake.localhost.localstack.cloud",
+    "port": 4566,
+    "protocol": "https",
+    "warehouse": "test",
+    "role": "test",
+}
 
 def find_latest_batch_file(data_dir="data"):
     """Find the batch file with the highest number"""
@@ -64,13 +78,57 @@ def upload_file_to_s3(file_path, custom_filename=None):
             new_name = f"{base_filename}_{timestamp}"
         target_filename = f"raw_data/{new_name}"
     
-    # Upload file
     try:
         s3.upload_file(file_path, S3_BUCKET_NAME, target_filename)
         print(f"File '{file_path}' uploaded to '{S3_BUCKET_NAME}/{target_filename}'")
         print("Snowpipe should now automatically ingest this file into RAW_SENSOR_DATA table")
+        return target_filename
     except Exception as e:
         print(f"Could not upload file: {e}")
+        return None
+
+
+def trigger_snowpipe_copy(uploaded_filename):
+    """Execute a scoped COPY INTO as a workaround for a LocalStack bug.
+
+    Real Snowflake runs the pipe's COPY automatically once S3 delivers a
+    notification to its internal SQS queue. The LocalStack Snowflake
+    emulator (tested on ``localstack/snowflake:latest`` as of 2026-04)
+    consumes the SQS notifications, but the auto-generated COPY targets
+    ``@stage/file.csv`` which returns zero rows in the emulator. To keep
+    the demo end-to-end functional, we run the COPY ourselves and scope
+    it to the file that was just uploaded via the ``PATTERN`` clause so
+    running ``make upload`` multiple times does not re-load previous
+    batches. Remove this helper once the upstream bug is fixed.
+    """
+    filename = os.path.basename(uploaded_filename)
+    pattern = f".*{filename}"
+    print(
+        "Running scoped COPY INTO to emulate Snowpipe auto-ingest "
+        f"(LocalStack workaround, pattern='{pattern}')..."
+    )
+    conn = snowflake.connector.connect(**SNOWFLAKE_CONFIG)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "COPY INTO RAW_SENSOR_DATA "
+            "FROM @SENSOR_DATA_STAGE "
+            f"PATTERN='{pattern}' "
+            "ON_ERROR='CONTINUE'"
+        )
+        rows = cursor.fetchall()
+        total_loaded = 0
+        for row in rows:
+            status = row[1] if len(row) > 1 else ""
+            loaded = row[3] if len(row) > 3 else 0
+            try:
+                total_loaded += int(loaded or 0)
+            except (TypeError, ValueError):
+                pass
+            print(f"  status={status}, rows_loaded={loaded}")
+        print(f"Snowpipe COPY complete. New rows loaded: {total_loaded}")
+    finally:
+        conn.close()
 
 def list_bucket_contents():
     """List contents of the S3 bucket"""
@@ -113,5 +171,7 @@ if __name__ == "__main__":
     else:
         file_to_upload = args.file
     
-    upload_file_to_s3(file_to_upload, args.name)
+    uploaded_key = upload_file_to_s3(file_to_upload, args.name)
     list_bucket_contents()
+    if uploaded_key:
+        trigger_snowpipe_copy(uploaded_key)
