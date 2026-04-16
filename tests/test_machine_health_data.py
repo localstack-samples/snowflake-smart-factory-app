@@ -46,13 +46,15 @@ def test_machine_health_metrics_data_types(snowflake_conn):
             pytest.skip("No data available in machine health metrics table")
         
         df = pd.DataFrame(data, columns=columns)
-        
-        # Type validations
-        assert df['machine_id'].dtype == 'object', "machine_id should be string type"
-        assert df['health_status'].dtype == 'object', "health_status should be string type"
+
+        # Type validations (accept both legacy `object` and modern `StringDtype`)
+        assert pd.api.types.is_string_dtype(df['machine_id']), \
+            "machine_id should be string type"
+        assert pd.api.types.is_string_dtype(df['health_status']), \
+            "health_status should be string type"
         assert pd.to_numeric(df['failure_risk_score'], errors='coerce').notnull().all(), \
             "failure_risk_score should be numeric"
-        assert df['maintenance_recommendation'].dtype == 'object', \
+        assert pd.api.types.is_string_dtype(df['maintenance_recommendation']), \
             "maintenance_recommendation should be string type"
         
         # Value validations
