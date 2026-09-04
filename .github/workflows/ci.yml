@@ -45,16 +45,13 @@ jobs:
             --no-interactive
           snow connection list
 
+      - name: Install lstk
+        run: npm install -g @localstack/lstk
+
       - name: Start LocalStack
-        uses: LocalStack/setup-localstack@v0.2.4
-        with:
-          image-tag: 'latest'
-          use-pro: 'true'
-          configuration: LS_LOG=trace
-          install-awslocal: 'true'
         env:
-          IMAGE_NAME: localstack/snowflake:latest
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+        run: lstk start
 
       - name: Install dependencies
         run: |

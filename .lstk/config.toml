@@ -1,0 +1,10 @@
+[[containers]]
+type = "snowflake"
+tag  = "latest"
+port = "4566"
+env  = ["ci"]
+
+[env.ci]
+DEBUG  = "1"
+SF_LOG = "trace"
+LS_LOG = "trace"
