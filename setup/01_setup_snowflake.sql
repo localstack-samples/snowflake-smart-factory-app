@@ -1,3 +1,6 @@
+-- Create the warehouse the connection profile references
+CREATE WAREHOUSE IF NOT EXISTS TEST;
+
 -- Create and use database
 CREATE DATABASE IF NOT EXISTS FACTORY_PIPELINE_DEMO;
 USE DATABASE FACTORY_PIPELINE_DEMO;

@@ -24,10 +24,9 @@ The application implements a modern data pipeline architecture showcasing a real
 
 ## Prerequisites
 
-- A valid [LocalStack for Snowflake license](https://localstack.cloud/pricing). Your license provides a [`LOCALSTACK_AUTH_TOKEN`](https://docs.localstack.cloud/getting-started/auth-token/) to activate LocalStack.
+- A valid [LocalStack for Snowflake license](https://localstack.cloud/pricing). Your license provides a [`LOCALSTACK_AUTH_TOKEN`](https://docs.localstack.cloud/aws/getting-started/auth-token/) to activate LocalStack.
 - [Docker](https://docs.docker.com/get-docker/)
-- [`localstack` CLI](https://docs.localstack.cloud/getting-started/installation/#localstack-cli).
-- [AWS CLI](https://docs.localstack.cloud/user-guide/integrations/aws-cli/) with the [`awslocal` wrapper](https://docs.localstack.cloud/user-guide/integrations/aws-cli/#localstack-aws-cli-awslocal).
+- [`lstk` CLI](https://docs.localstack.cloud/aws/developer-tools/running-localstack/lstk/). The [AWS CLI](https://docs.localstack.cloud/user-guide/integrations/aws-cli/) is required by `lstk aws`.
 - [Snowflake CLI](https://docs.snowflake.com/developer-guide/snowflake-cli/index) with a [`localstack` connection profile](https://snowflake.localstack.cloud/user-guide/integrations/snow-cli/).
 - [Python](https://www.python.org/downloads/) 3.10+ & [`pip`](https://pip.pypa.io/en/stable/installation/)
 - [`make`](https://www.gnu.org/software/make/) (**optional**, but recommended for running the sample application)
@@ -59,11 +58,8 @@ make install
 Start LocalStack with the `LOCALSTACK_AUTH_TOKEN` pre-configured:
 
 ```bash
-localstack auth set-token <your-auth-token>
-DOCKER_FLAGS='-e SF_LOG=trace' \
-DEBUG=1 \
-IMAGE_NAME=localstack/snowflake:latest \
-localstack start
+export LOCALSTACK_AUTH_TOKEN=<your-auth-token>
+lstk start
 ```
 
 To deploy the sample application, run the following command:
@@ -186,14 +182,14 @@ Cloud Pods enable persistent state snapshots of your LocalStack instance that ca
 To save a Cloud Pod, run the following command:
 
 ```bash
-localstack pod save smart-factory-app
+lstk snapshot save pod:smart-factory-app
 ```
 
 To load a Cloud Pod, run the following command:
 
 ```bash
 # Restore the saved state in a fresh LocalStack instance
-localstack pod load smart-factory-app
+lstk snapshot load pod:smart-factory-app
 ```
 
 The key advantages are:

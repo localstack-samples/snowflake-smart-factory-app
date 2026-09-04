@@ -1,6 +1,7 @@
 # LocalStack 
 
 volume/
+.lstk/lstk.log
 
 # dbt 
 

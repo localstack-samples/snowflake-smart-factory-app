@@ -10,7 +10,8 @@ LATEST ?= false
 check:			## Check if all required prerequisites are installed
 	@echo "Checking if all required prerequisites are installed..."
 	@which snow > /dev/null 2>&1 || (echo "Snowflake CLI is not installed. Please install it from https://docs.snowflake.com/en/user-guide/snowsql-install-config.html" && exit 1)
-	@which localstack > /dev/null 2>&1 || (echo "LocalStack is not installed. Please install it from https://docs.localstack.cloud/getting-started/installation/" && exit 1)
+	@which lstk > /dev/null 2>&1 || (echo "lstk is not installed. Please install it from https://docs.localstack.cloud/aws/developer-tools/running-localstack/lstk/" && exit 1)
+	@which aws > /dev/null 2>&1 || (echo "AWS CLI is not installed. Please install it from https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html" && exit 1)
 	@echo python > /dev/null 2>&1 || (echo "Python is not installed. Please install it from https://www.python.org/downloads/" && exit 1)
 	@echo virtualenv > /dev/null 2>&1 || (echo "virtualenv is not installed. Please install it from https://virtualenv.pypa.io/en/latest/installation.html" && exit 1)
 	@echo docker > /dev/null 2>&1 || (echo "Docker is not installed. Please install it from https://docs.docker.com/get-docker/" && exit 1)
@@ -89,13 +90,13 @@ debug:			## Clean up everything and redeploy to fix bugs
 	snow sql -c localstack -q "USE DATABASE FACTORY_PIPELINE_DEMO; USE SCHEMA PUBLIC; DROP FILE FORMAT IF EXISTS csv_format;"
 	snow sql -c localstack -q "DROP PIPE IF EXISTS FACTORY_PIPELINE_DEMO.PUBLIC.SENSOR_DATA_PIPE;"
 	snow sql -c localstack -q "DROP TABLE IF EXISTS FACTORY_PIPELINE_DEMO.PUBLIC_RAW.SENSOR_DATA;"
-	awslocal s3 rb s3://factory-sensor-data-local --force
+	lstk aws s3 rb s3://factory-sensor-data-local --force
 	make deploy
 	@echo "Debug cleanup and redeploy completed successfully."
 
 alerts:			## Setup alerts
 	@echo "Setting up alerts..."
-	awslocal ses verify-email-identity --email hello@example.com
+	lstk aws ses verify-email-identity --email hello@example.com
 	snow sql -f solutions/task_alert_udf.sql -c localstack
 	@echo "Alerts setup successfully."
 
@@ -110,23 +111,17 @@ test:			## Run tests
 start:			## Start LocalStack
 	@echo "Starting LocalStack..."
 	@test -n "${LOCALSTACK_AUTH_TOKEN}" || (echo "LOCALSTACK_AUTH_TOKEN is not set. Find your token at https://app.localstack.cloud/workspace/auth-token"; exit 1)
-	DOCKER_FLAGS='-e SF_LOG=trace' \
-	DEBUG=1 \
-	IMAGE_NAME=localstack/snowflake:latest \
 	LOCALSTACK_AUTH_TOKEN=$(LOCALSTACK_AUTH_TOKEN) \
-	localstack start -d
+	lstk start
 	@echo "LocalStack started successfully."
 
 stop:			## Stop LocalStack
 	@echo "Stopping LocalStack..."
-	@localstack stop
+	@lstk stop
 	@echo "LocalStack stopped successfully."
 
-ready:			## Make sure the LocalStack container is up
-		@echo Waiting on the LocalStack container...
-		@localstack wait -t 30 && echo LocalStack is ready to use! || (echo Gave up waiting on LocalStack, exiting. && exit 1)
 
 logs:			## Save the logs in a separate file
-		@localstack logs > logs.txt
+		@lstk logs > logs.txt
 
-.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug generate
+.PHONY: install seed aws upload pipeline dbt app deploy test start stop logs debug generate

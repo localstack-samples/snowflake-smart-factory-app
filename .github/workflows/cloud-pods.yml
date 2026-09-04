@@ -48,16 +48,13 @@ jobs:
         run: |
           make install
 
+      - name: Install lstk
+        run: npm install -g @localstack/lstk
+
       - name: Start LocalStack
-        uses: LocalStack/setup-localstack@main
-        with:
-          image-tag: 'latest'
-          use-pro: 'true'
-          configuration: LS_LOG=trace
-          install-awslocal: 'true'
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
-          IMAGE_NAME: localstack/snowflake:latest
+        run: lstk start
 
       - name: Create Snowflake resources
         run: |
@@ -80,13 +77,12 @@ jobs:
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: |
-          message="Cloud Pod created: smart-factory-app on $(date) with workflow run id: ${{ github.run_id }}"
-          localstack pod save smart-factory-app --message "$message"
+          lstk snapshot save pod:smart-factory-app
 
       - name: Show LocalStack Logs
         if: always()
         run: |
-          localstack logs
+          lstk logs
 
   test-cloud-pod:
     name: Test Cloud Pod
@@ -96,21 +92,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Install lstk
+        run: npm install -g @localstack/lstk
+
       - name: Start LocalStack
-        uses: LocalStack/setup-localstack@main
-        with:
-          use-pro: 'true'
-          install-awslocal: 'true'
         env:
-          DEBUG: 1
-          IMAGE_NAME: localstack/snowflake:latest
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+        run: lstk start
 
       - name: Load Cloud Pod
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: |
-          localstack pod load smart-factory-app
+          lstk snapshot load pod:smart-factory-app
 
       - name: Install dependencies
         run: |
@@ -124,7 +118,7 @@ jobs:
       - name: Show LocalStack Logs
         if: always()
         run: |
-          localstack logs
+          lstk logs
 
       - name: Generate a Diagnostic Report
         if: failure()
