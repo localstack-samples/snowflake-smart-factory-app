@@ -1,4 +1,4 @@
-name: Create and Test Cloud Pods
+name: Create and Test Snapshots
 
 on:
   schedule:
@@ -13,13 +13,16 @@ permissions:
   contents: write
   actions: read
 
+# The Snowflake emulator does not support Cloud Pods on the LocalStack platform yet, so the state moves
+# between the jobs as a local snapshot file in a workflow artifact
 env:
   # the Snowflake emulator from docker-compose.yml, as seen from the runner
   SNOWFLAKE_ENDPOINT: http://localhost.localstack.cloud:4567
+  SNAPSHOT: smart-factory-app.snapshot
 
 jobs:
-  create-cloud-pod:
-    name: Create Cloud Pods
+  create-snapshot:
+    name: Create Snapshot
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -80,20 +83,27 @@ jobs:
       # The Native App (make app) is not deployed: Snowflake Next does not support application packages yet
       # (CREATE APPLICATION PACKAGE, SHOW APPLICATION PACKAGES)
 
-      - name: Create Cloud Pod
+      - name: Save a snapshot
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: |
-          lstk --endpoint-url "$SNOWFLAKE_ENDPOINT" --non-interactive save pod:smart-factory-app
+          lstk --endpoint-url "$SNOWFLAKE_ENDPOINT" --non-interactive save "./$SNAPSHOT"
+
+      - name: Upload the snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-factory-app-snapshot
+          path: ${{ env.SNAPSHOT }}
+          retention-days: 7
 
       - name: Show LocalStack Logs
         if: always()
         run: |
           docker compose logs --tail 300
 
-  test-cloud-pod:
-    name: Test Cloud Pod
-    needs: create-cloud-pod
+  test-snapshot:
+    name: Test Snapshot
+    needs: create-snapshot
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -116,12 +126,17 @@ jobs:
         run: |
           docker compose up --detach --wait localstack-snowflake
 
-      - name: Load Cloud Pod
+      - name: Download the snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: smart-factory-app-snapshot
+
+      - name: Load the snapshot
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: |
           npm install -g @localstack/lstk
-          lstk --endpoint-url "$SNOWFLAKE_ENDPOINT" --non-interactive load pod:smart-factory-app
+          lstk --endpoint-url "$SNOWFLAKE_ENDPOINT" --non-interactive load "./$SNAPSHOT"
 
       - name: Install dependencies
         run: |

@@ -26,7 +26,7 @@ The application implements a modern data pipeline architecture showcasing a real
 
 - A valid [LocalStack for Snowflake license](https://localstack.cloud/pricing). Your license provides a [`LOCALSTACK_AUTH_TOKEN`](https://docs.localstack.cloud/getting-started/auth-token/) to activate LocalStack.
 - [Docker](https://docs.docker.com/get-docker/) with [Docker Compose](https://docs.docker.com/compose/install/)
-- [`lstk`](https://docs.localstack.cloud/aws/developer-tools/running-localstack/lstk/) (only for Cloud Pods)
+- [`lstk`](https://docs.localstack.cloud/aws/developer-tools/running-localstack/lstk/) (only for snapshots)
 - [AWS CLI](https://docs.localstack.cloud/user-guide/integrations/aws-cli/) with the [`awslocal` wrapper](https://docs.localstack.cloud/user-guide/integrations/aws-cli/#localstack-aws-cli-awslocal).
 - [Snowflake CLI](https://docs.snowflake.com/developer-guide/snowflake-cli/index) with a [`localstack` connection profile](https://snowflake.localstack.cloud/user-guide/integrations/snow-cli/) on port 4567 (see [Deployment](#deployment)).
 - [Python](https://www.python.org/downloads/) 3.10+ & [`pip`](https://pip.pypa.io/en/stable/installation/)
@@ -190,23 +190,23 @@ This showcases:
 - Point-in-time recovery scenarios
 - Disaster recovery best practices
 
-### Test Data Management with Cloud Pods
+### Test Data Management with Snapshots
 
-Cloud Pods enable persistent state snapshots of your LocalStack instance that can be easily stored, versioned, shared, and restored across development teams and CI/CD environments.
+Snapshots capture the state of the emulator in a file that can be stored, shared, and restored across development teams and CI/CD environments.
 
-The Snowflake state (databases, tables, loaded sensor data and dbt models) lives in the Snowflake emulator container, so save and load the pod there with `lstk`.
+The Snowflake state (databases, tables, loaded sensor data and dbt models) lives in the Snowflake emulator container, so save and load the snapshot there with `lstk`. The Snowflake emulator does not support Cloud Pods on the LocalStack platform yet, so use a local snapshot file.
 
-To save a Cloud Pod, run the following command:
+To save a snapshot, run the following command:
 
 ```bash
-lstk --endpoint-url http://localhost.localstack.cloud:4567 save pod:smart-factory-app
+lstk --endpoint-url http://localhost.localstack.cloud:4567 save ./smart-factory-app.snapshot
 ```
 
-To load a Cloud Pod, run the following command:
+To load a snapshot, run the following command:
 
 ```bash
 # Restore the saved state in a fresh Snowflake emulator
-lstk --endpoint-url http://localhost.localstack.cloud:4567 load pod:smart-factory-app
+lstk --endpoint-url http://localhost.localstack.cloud:4567 load ./smart-factory-app.snapshot
 ```
 
 The key advantages are:
@@ -216,7 +216,7 @@ The key advantages are:
 - Guarantee the same test data state across different pipeline runs and environments  
 - Capture problematic states for collaborative debugging and issue reproduction
 
-For automated Cloud Pods management in CI/CD pipelines, check out the sample workflow in [`.github/workflows/cloud-pods.yml`](.github/workflows/cloud-pods.yml).
+For snapshots in CI/CD pipelines, check out the sample workflow in [`.github/workflows/cloud-pods.yml`](.github/workflows/cloud-pods.yml), which saves a snapshot in one job and tests it in another.
 
 ## License
 
