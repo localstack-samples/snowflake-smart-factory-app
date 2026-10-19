@@ -25,10 +25,10 @@ The application implements a modern data pipeline architecture showcasing a real
 ## Prerequisites
 
 - A valid [LocalStack for Snowflake license](https://localstack.cloud/pricing). Your license provides a [`LOCALSTACK_AUTH_TOKEN`](https://docs.localstack.cloud/getting-started/auth-token/) to activate LocalStack.
-- [Docker](https://docs.docker.com/get-docker/)
-- [`localstack` CLI](https://docs.localstack.cloud/getting-started/installation/#localstack-cli).
+- [Docker](https://docs.docker.com/get-docker/) with [Docker Compose](https://docs.docker.com/compose/install/)
+- [`lstk`](https://docs.localstack.cloud/aws/developer-tools/running-localstack/lstk/) (only for Cloud Pods)
 - [AWS CLI](https://docs.localstack.cloud/user-guide/integrations/aws-cli/) with the [`awslocal` wrapper](https://docs.localstack.cloud/user-guide/integrations/aws-cli/#localstack-aws-cli-awslocal).
-- [Snowflake CLI](https://docs.snowflake.com/developer-guide/snowflake-cli/index) with a [`localstack` connection profile](https://snowflake.localstack.cloud/user-guide/integrations/snow-cli/).
+- [Snowflake CLI](https://docs.snowflake.com/developer-guide/snowflake-cli/index) with a [`localstack` connection profile](https://snowflake.localstack.cloud/user-guide/integrations/snow-cli/) on port 4567 (see [Deployment](#deployment)).
 - [Python](https://www.python.org/downloads/) 3.10+ & [`pip`](https://pip.pypa.io/en/stable/installation/)
 - [`make`](https://www.gnu.org/software/make/) (**optional**, but recommended for running the sample application)
 
@@ -56,14 +56,22 @@ make install
 
 ## Deployment
 
-Start LocalStack with the `LOCALSTACK_AUTH_TOKEN` pre-configured:
+The sample runs two containers with Docker Compose: LocalStack for AWS (S3, SQS, SES) on port 4566, and the LocalStack Snowflake emulator (`localstack/snowflake-next`) on port 4567. The emulator reads the external stage from LocalStack's S3.
+
+Start both with your `LOCALSTACK_AUTH_TOKEN`:
 
 ```bash
-localstack auth set-token <your-auth-token>
-DOCKER_FLAGS='-e SF_LOG=trace' \
-DEBUG=1 \
-IMAGE_NAME=localstack/snowflake:latest \
-localstack start
+export LOCALSTACK_AUTH_TOKEN=<your-auth-token>
+make start
+```
+
+Point the Snowflake CLI `localstack` connection at the emulator:
+
+```bash
+snow connection add --connection-name localstack \
+  --user test --password test --account test --role test \
+  --warehouse test --database test --schema test \
+  --host snowflake.localhost.localstack.cloud --port 4567 --no-interactive
 ```
 
 To deploy the sample application, run the following command:
@@ -79,6 +87,9 @@ This will:
 - Upload sample sensor data (`data/sensor_data_batch_1.csv`)
 - Run dbt transformations to process the data
 
+> [!NOTE]
+> The Native App step does not run on the Snowflake emulator yet: it does not support application packages (`CREATE APPLICATION PACKAGE`, `SHOW APPLICATION PACKAGES`), so `make app` fails and CI skips it. The rest of the sample runs on it.
+
 You can also run the following command to deploy the Native app:
 
 ```bash
@@ -89,7 +100,7 @@ The output will be similar to the following:
 
 ```bash
 [●] Deployed on LocalStack
- └─ URL: https://snowflake.localhost.localstack.cloud:4566/apps/test/test/FACTORY_APP_{USER}/
+ └─ URL: https://snowflake.localhost.localstack.cloud:4567/apps/test/test/FACTORY_APP_{USER}/
 ```
 
 The dashboard provides:
@@ -183,22 +194,24 @@ This showcases:
 
 Cloud Pods enable persistent state snapshots of your LocalStack instance that can be easily stored, versioned, shared, and restored across development teams and CI/CD environments.
 
+The Snowflake state (databases, tables, loaded sensor data and dbt models) lives in the Snowflake emulator container, so save and load the pod there with `lstk`.
+
 To save a Cloud Pod, run the following command:
 
 ```bash
-localstack pod save smart-factory-app
+lstk --endpoint-url http://localhost.localstack.cloud:4567 save pod:smart-factory-app
 ```
 
 To load a Cloud Pod, run the following command:
 
 ```bash
-# Restore the saved state in a fresh LocalStack instance
-localstack pod load smart-factory-app
+# Restore the saved state in a fresh Snowflake emulator
+lstk --endpoint-url http://localhost.localstack.cloud:4567 load pod:smart-factory-app
 ```
 
 The key advantages are:
 
-- Pre-seed CI environments with complex factory data, Snowflake schemas, and S3 assets in seconds
+- Pre-seed CI environments with complex factory data and Snowflake schemas in seconds
 - Share identical test scenarios across development teams for consistent debugging
 - Guarantee the same test data state across different pipeline runs and environments  
 - Capture problematic states for collaborative debugging and issue reproduction

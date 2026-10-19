@@ -4,7 +4,8 @@ import json
 # Configuration
 S3_ENDPOINT_URL = "http://localhost:4566"
 S3_BUCKET_NAME = "factory-sensor-data-local"
-SQS_QUEUE_ARN = "arn:aws:sqs:us-east-1:000000000000:sf-snowpipe-test"
+SQS_QUEUE_NAME = "sf-snowpipe-test"
+SQS_QUEUE_ARN = f"arn:aws:sqs:us-east-1:000000000000:{SQS_QUEUE_NAME}"
 
 def create_s3_bucket():
     """Create S3 bucket for sensor data"""
@@ -22,6 +23,18 @@ def create_s3_bucket():
         print(f"Bucket '{S3_BUCKET_NAME}' created successfully.")
     except Exception as e:
         print(f"Could not create bucket: {e}")
+
+def create_sqs_queue():
+    """Create the SQS queue the bucket notifies (the Snowflake emulator picks up new files itself)"""
+    sqs = boto3.client(
+        "sqs",
+        endpoint_url=S3_ENDPOINT_URL,
+        aws_access_key_id="test",
+        aws_secret_access_key="test",
+        region_name="us-east-1"
+    )
+    sqs.create_queue(QueueName=SQS_QUEUE_NAME)
+    print(f"Queue '{SQS_QUEUE_NAME}' created successfully.")
 
 def configure_event_notification():
     """Configure S3 bucket notifications for Snowpipe"""
@@ -69,5 +82,6 @@ def configure_event_notification():
 
 if __name__ == "__main__":
     create_s3_bucket()
+    create_sqs_queue()
     configure_event_notification()
     print("S3 bucket setup complete with Snowpipe notification configuration.") 
