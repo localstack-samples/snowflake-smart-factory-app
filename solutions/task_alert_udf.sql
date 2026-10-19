@@ -25,7 +25,7 @@ USE SCHEMA PUBLIC;
 CREATE OR REPLACE FUNCTION send_critical_machines_report(critical_machines_json VARCHAR)
 RETURNS VARIANT
 LANGUAGE PYTHON
-RUNTIME_VERSION = 3.9
+RUNTIME_VERSION = '3.11'
 PACKAGES = ('boto3')
 HANDLER = 'send_report'
 AS $$
@@ -35,7 +35,8 @@ from datetime import datetime
 
 def send_report(critical_machines_json):
     try:
-        endpoint_url = "http://localhost:4566"
+        # The UDF runs in the Snowflake emulator container, which reaches LocalStack for AWS by its compose service name
+        endpoint_url = "http://localstack-aws:4566"
         
         ses_client = boto3.client(
             "ses",

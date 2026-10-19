@@ -12,4 +12,4 @@ localstack:
       threads: 1
       # For LocalStack, you need to specify host and port
       host: snowflake.localhost.localstack.cloud
-      port: 4566
+      port: 4567

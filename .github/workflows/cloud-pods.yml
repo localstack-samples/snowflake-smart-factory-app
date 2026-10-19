@@ -1,4 +1,4 @@
-name: Create and Test Cloud Pods
+name: Create and Test Snapshots
 
 on:
   schedule:
@@ -13,9 +13,16 @@ permissions:
   contents: write
   actions: read
 
+# The Snowflake emulator does not support Cloud Pods on the LocalStack platform yet, so the state moves
+# between the jobs as a local snapshot file in a workflow artifact
+env:
+  # the Snowflake emulator from docker-compose.yml, as seen from the runner
+  SNOWFLAKE_ENDPOINT: http://localhost.localstack.cloud:4567
+  SNAPSHOT: smart-factory-app.snapshot
+
 jobs:
-  create-cloud-pod:
-    name: Create Cloud Pods
+  create-snapshot:
+    name: Create Snapshot
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -24,9 +31,14 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12' 
+          python-version: '3.12'
 
-      - name: Install Snow CLI
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Snow CLI and lstk
         run: |
           pip install snowflake-cli==3.7.2
           snow --version
@@ -39,25 +51,21 @@ jobs:
             --warehouse test \
             --database test \
             --schema test \
-            --port 4566 \
+            --port 4567 \
             --host snowflake.localhost.localstack.cloud \
             --no-interactive
           snow connection list
+          npm install -g @localstack/lstk
 
       - name: Install dependencies
         run: |
           make install
 
-      - name: Start LocalStack
-        uses: LocalStack/setup-localstack@main
-        with:
-          image-tag: 'latest'
-          use-pro: 'true'
-          configuration: LS_LOG=trace
-          install-awslocal: 'true'
+      - name: Start LocalStack for AWS and the Snowflake emulator
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
-          IMAGE_NAME: localstack/snowflake:latest
+        run: |
+          make start
 
       - name: Create Snowflake resources
         run: |
@@ -72,45 +80,63 @@ jobs:
         run: |
           make dbt
 
-      - name: Deploy Native App
-        run: |
-          make app
+      # The Native App (make app) is not deployed: Snowflake Next does not support application packages yet
+      # (CREATE APPLICATION PACKAGE, SHOW APPLICATION PACKAGES)
 
-      - name: Create Cloud Pod
+      - name: Save a snapshot
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: |
-          message="Cloud Pod created: smart-factory-app on $(date) with workflow run id: ${{ github.run_id }}"
-          localstack pod save smart-factory-app --message "$message"
+          lstk --endpoint-url "$SNOWFLAKE_ENDPOINT" --non-interactive save "./$SNAPSHOT"
+
+      - name: Upload the snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-factory-app-snapshot
+          path: ${{ env.SNAPSHOT }}
+          retention-days: 7
 
       - name: Show LocalStack Logs
         if: always()
         run: |
-          localstack logs
+          docker compose logs --tail 300
 
-  test-cloud-pod:
-    name: Test Cloud Pod
-    needs: create-cloud-pod
+  test-snapshot:
+    name: Test Snapshot
+    needs: create-snapshot
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Start LocalStack
-        uses: LocalStack/setup-localstack@main
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          use-pro: 'true'
-          install-awslocal: 'true'
-        env:
-          DEBUG: 1
-          IMAGE_NAME: localstack/snowflake:latest
-          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+          python-version: '3.12'
 
-      - name: Load Cloud Pod
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The tests only query Snowflake, so the AWS container is not needed here
+      - name: Start the Snowflake emulator
         env:
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: |
-          localstack pod load smart-factory-app
+          docker compose up --detach --wait localstack-snowflake
+
+      - name: Download the snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: smart-factory-app-snapshot
+
+      - name: Load the snapshot
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+        run: |
+          npm install -g @localstack/lstk
+          lstk --endpoint-url "$SNOWFLAKE_ENDPOINT" --non-interactive load "./$SNAPSHOT"
 
       - name: Install dependencies
         run: |
@@ -123,17 +149,7 @@ jobs:
 
       - name: Show LocalStack Logs
         if: always()
+        env:
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
         run: |
-          localstack logs
-
-      - name: Generate a Diagnostic Report
-        if: failure()
-        run: |
-          curl -s localhost:4566/_localstack/diagnose | gzip -cf > diagnose.json.gz
-
-      - name: Upload the Diagnostic Report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: diagnose.json.gz
-          path: ./diagnose.json.gz
+          docker compose logs --tail 300

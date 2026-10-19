@@ -10,7 +10,7 @@ LATEST ?= false
 check:			## Check if all required prerequisites are installed
 	@echo "Checking if all required prerequisites are installed..."
 	@which snow > /dev/null 2>&1 || (echo "Snowflake CLI is not installed. Please install it from https://docs.snowflake.com/en/user-guide/snowsql-install-config.html" && exit 1)
-	@which localstack > /dev/null 2>&1 || (echo "LocalStack is not installed. Please install it from https://docs.localstack.cloud/getting-started/installation/" && exit 1)
+	@docker compose version > /dev/null 2>&1 || (echo "Docker Compose is not installed. Please install it from https://docs.docker.com/compose/install/" && exit 1)
 	@echo python > /dev/null 2>&1 || (echo "Python is not installed. Please install it from https://www.python.org/downloads/" && exit 1)
 	@echo virtualenv > /dev/null 2>&1 || (echo "virtualenv is not installed. Please install it from https://virtualenv.pypa.io/en/latest/installation.html" && exit 1)
 	@echo docker > /dev/null 2>&1 || (echo "Docker is not installed. Please install it from https://docs.docker.com/get-docker/" && exit 1)
@@ -68,7 +68,7 @@ app:			## Run Snowflake Native App
 	cd app && snow app run -c localstack
 	@echo ""
 	@echo "[●] Deployed on LocalStack"
-	@printf " └─ URL: \033[4;94mhttps://snowflake.localhost.localstack.cloud:4566/apps/test/test/FACTORY_APP_$$(whoami | tr '[:lower:]' '[:upper:]')/\033[0m\n"
+	@printf " └─ URL: \033[4;94mhttps://snowflake.localhost.localstack.cloud:4567/apps/test/test/FACTORY_APP_$$(whoami | tr '[:lower:]' '[:upper:]')/\033[0m\n"
 	@echo ""
 
 streamlit:		## Run Streamlit app
@@ -107,26 +107,22 @@ test:			## Run tests
 	bash -c "source env/bin/activate && pytest tests/"
 	@echo "Tests run successfully."
 
-start:			## Start LocalStack
+start:			## Start LocalStack for AWS and the Snowflake emulator (Snowflake Next)
 	@echo "Starting LocalStack..."
 	@test -n "${LOCALSTACK_AUTH_TOKEN}" || (echo "LOCALSTACK_AUTH_TOKEN is not set. Find your token at https://app.localstack.cloud/workspace/auth-token"; exit 1)
-	DOCKER_FLAGS='-e SF_LOG=trace' \
-	DEBUG=1 \
-	IMAGE_NAME=localstack/snowflake:latest \
-	LOCALSTACK_AUTH_TOKEN=$(LOCALSTACK_AUTH_TOKEN) \
-	localstack start -d
+	docker compose up --detach --wait
 	@echo "LocalStack started successfully."
 
 stop:			## Stop LocalStack
 	@echo "Stopping LocalStack..."
-	@localstack stop
+	@docker compose down --volumes
 	@echo "LocalStack stopped successfully."
 
-ready:			## Make sure the LocalStack container is up
-		@echo Waiting on the LocalStack container...
-		@localstack wait -t 30 && echo LocalStack is ready to use! || (echo Gave up waiting on LocalStack, exiting. && exit 1)
+ready:			## Make sure the LocalStack containers are up
+		@echo Waiting on the LocalStack containers...
+		@docker compose up --detach --wait > /dev/null && echo LocalStack is ready to use! || (echo Gave up waiting on LocalStack, exiting. && exit 1)
 
 logs:			## Save the logs in a separate file
-		@localstack logs > logs.txt
+		@docker compose logs > logs.txt
 
 .PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug generate

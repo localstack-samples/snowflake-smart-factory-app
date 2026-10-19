@@ -21,7 +21,7 @@ def setup_test_env():
         "SNOWFLAKE_ACCOUNT": "test",
         "SNOWFLAKE_WAREHOUSE": "test",
         "SNOWFLAKE_HOST": "snowflake.localhost.localstack.cloud",
-        "SNOWFLAKE_PORT": "4566",
+        "SNOWFLAKE_PORT": "4567",
     }
     
     # Only set variables that aren't already defined
@@ -45,7 +45,7 @@ def snowflake_conn():
             database="FACTORY_PIPELINE_DEMO",
             schema="PUBLIC",
             host=os.getenv("SNOWFLAKE_HOST", "snowflake.localhost.localstack.cloud"),
-            port=os.getenv("SNOWFLAKE_PORT", "4566"),
+            port=os.getenv("SNOWFLAKE_PORT", "4567"),
         )
         logger.info("Successfully connected to Snowflake")
         yield conn
@@ -66,5 +66,5 @@ def get_snowflake_connection():
         database="FACTORY_PIPELINE_DEMO",
         schema="PUBLIC",
         host=os.getenv("SNOWFLAKE_HOST", "snowflake.localhost.localstack.cloud"),
-        port=os.getenv("SNOWFLAKE_PORT", "4566"),
+        port=os.getenv("SNOWFLAKE_PORT", "4567"),
     ) 

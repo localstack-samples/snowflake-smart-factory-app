@@ -1,15 +1,42 @@
+# LocalStack for AWS (S3, SQS, SES) and the LocalStack Snowflake emulator run as two containers.
+# AWS clients use http://localhost.localstack.cloud:4566, Snowflake clients
+# snowflake.localhost.localstack.cloud:4567.
 services:
-  localstack:
-    container_name: "localstack-snowflake"
-    image: localstack/snowflake:latest
+  localstack-aws:
+    container_name: localstack-aws
+    image: localstack/localstack-pro:latest
     ports:
       - "127.0.0.1:4566:4566"
       - "127.0.0.1:4510-4559:4510-4559"
-      - "127.0.0.1:443:443"
     environment:
-      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?}
-      - DEBUG=1
-      - DOCKER_FLAGS='-e SF_LOG=trace'
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
+      - DEBUG=${DEBUG:-0}
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4566/_localstack/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
     volumes:
-      - "./volume:/var/lib/localstack"
+      - "./volume/aws:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+
+  localstack-snowflake:
+    container_name: localstack-snowflake
+    image: localstack/snowflake-next:latest
+    ports:
+      - "127.0.0.1:4567:4567"
+    environment:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
+      - GATEWAY_LISTEN=0.0.0.0:4567
+      - SF_LOG=${SF_LOG:-info}
+      # hostnames routed to the Snowflake emulator: the default name for clients on the host
+      # (also the advertised API host) and the container name for the AWS container
+      - SF_HOSTNAMES=snowflake.localhost.localstack.cloud,localstack-snowflake
+      # S3 endpoint for the external stage on s3://factory-sensor-data-local
+      - SF_S3_ENDPOINT=http://localstack-aws:4566
+    healthcheck:
+      # the image has bash but no curl or python
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/4567 && printf 'GET /_localstack/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q available <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 60

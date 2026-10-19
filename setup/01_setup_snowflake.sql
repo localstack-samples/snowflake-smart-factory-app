@@ -31,8 +31,7 @@ CREATE OR REPLACE FILE FORMAT csv_format
 CREATE OR REPLACE STAGE sensor_data_stage
     URL = 's3://factory-sensor-data-local/raw_data/'
     CREDENTIALS = (AWS_KEY_ID='test' AWS_SECRET_KEY='test')
-    FILE_FORMAT = csv_format
-    AWS_ROLE = NULL;
+    FILE_FORMAT = csv_format;
 
 -- Create a Snowpipe for automated ingestion
 CREATE OR REPLACE PIPE sensor_data_pipe 
