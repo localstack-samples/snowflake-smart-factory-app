@@ -4,11 +4,31 @@ import argparse
 import os
 import glob
 import re
+import sys
+
+import snowflake.connector
 
 # Configuration
 S3_ENDPOINT_URL = "http://localhost:4566"
 S3_BUCKET_NAME = "factory-sensor-data-local"
 DEFAULT_FILE_PATH = "data/sensor_data_batch_1.csv"
+# Snowpipe ingests asynchronously; wait this long for the uploaded rows to land.
+INGEST_TIMEOUT = 120
+
+def raw_row_count(cursor):
+    cursor.execute("SELECT COUNT(*) FROM FACTORY_PIPELINE_DEMO.PUBLIC.RAW_SENSOR_DATA")
+    return cursor.fetchone()[0]
+
+def wait_for_ingestion(cursor, rows_before):
+    """Wait until Snowpipe has loaded the uploaded file, so later steps (dbt) see its rows."""
+    deadline = time.monotonic() + INGEST_TIMEOUT
+    while time.monotonic() < deadline:
+        rows = raw_row_count(cursor)
+        if rows > rows_before:
+            print(f"Snowpipe ingested the file: RAW_SENSOR_DATA has {rows} rows (was {rows_before})")
+            return
+        time.sleep(1)
+    sys.exit(f"Snowpipe did not ingest the file within {INGEST_TIMEOUT} seconds")
 
 def find_latest_batch_file(data_dir="data"):
     """Find the batch file with the highest number"""
@@ -113,5 +133,16 @@ if __name__ == "__main__":
     else:
         file_to_upload = args.file
     
+    conn = snowflake.connector.connect(
+        user=os.getenv("SNOWFLAKE_USER", "test"),
+        password=os.getenv("SNOWFLAKE_PASSWORD", "test"),
+        account=os.getenv("SNOWFLAKE_ACCOUNT", "test"),
+        host=os.getenv("SNOWFLAKE_HOST", "snowflake.localhost.localstack.cloud"),
+        port=os.getenv("SNOWFLAKE_PORT", "4567"),
+    )
+    cursor = conn.cursor()
+    rows_before = raw_row_count(cursor)
     upload_file_to_s3(file_to_upload, args.name)
     list_bucket_contents()
+    wait_for_ingestion(cursor, rows_before)
+    conn.close()

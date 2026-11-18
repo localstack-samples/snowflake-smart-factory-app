@@ -1,3 +1,7 @@
+-- Create warehouse used by the localstack connection
+CREATE WAREHOUSE IF NOT EXISTS test WITH WAREHOUSE_SIZE = 'XSMALL';
+USE WAREHOUSE test;
+
 -- Create and use database
 CREATE DATABASE IF NOT EXISTS FACTORY_PIPELINE_DEMO;
 USE DATABASE FACTORY_PIPELINE_DEMO;

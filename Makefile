@@ -4,6 +4,14 @@ export AWS_DEFAULT_REGION=us-east-1
 export DBT_WARN_ERROR_OPTIONS={"silence": ["UnusedResourceConfigPath", "NoNodesForSelectionCriteria"]}
 SHELL := /bin/bash
 
+# Name `snow app run` gives the Native App: factory_app_<user>, where <user> is $USER
+# (or $USERNAME, $LOGNAME) without the characters an unquoted identifier cannot hold.
+APP_USER := $(shell printf '%s' "$${USER:-$${USERNAME:-$${LOGNAME:-unknown_user}}}" | tr -cd 'A-Za-z0-9_$$')
+APP_NAME ?= FACTORY_APP_$(shell printf '%s' "$(APP_USER)" | tr '[:lower:]' '[:upper:]')
+# The app's default Streamlit (CORE.UI) is served at /streamlits/<account>/<app>/<schema>/<name>/;
+# the `localstack` connection logs in to account TEST.
+APP_URL ?= https://snowflake.localhost.localstack.cloud:4567/streamlits/TEST/$(APP_NAME)/CORE/UI/
+
 # Flag to control which batch file to upload (default: false = use batch 1, true = use latest batch)
 LATEST ?= false
 
@@ -65,11 +73,16 @@ dbt:			## Run dbt models
 
 app:			## Run Snowflake Native App
 	@echo "Running app..."
-	cd app && snow app run -c localstack
+	cd app && snow app run -c localstack --role ACCOUNTADMIN
+	snow sql -f app/grants.sql -c localstack --role ACCOUNTADMIN -D app_name=$(APP_NAME)
 	@echo ""
 	@echo "[●] Deployed on LocalStack"
-	@printf " └─ URL: \033[4;94mhttps://snowflake.localhost.localstack.cloud:4567/apps/test/test/FACTORY_APP_$$(whoami | tr '[:lower:]' '[:upper:]')/\033[0m\n"
+	@printf " └─ URL: \033[4;94m$(APP_URL)\033[0m\n"
 	@echo ""
+
+app-check:		## Check that the Native App dashboard is served
+	@echo "Checking the Native App dashboard at $(APP_URL)..."
+	bash -c "source env/bin/activate && python bin/check_app.py $(APP_URL)"
 
 streamlit:		## Run Streamlit app
 	@echo "Running Streamlit app..."
@@ -125,4 +138,4 @@ ready:			## Make sure the LocalStack containers are up
 logs:			## Save the logs in a separate file
 		@docker compose logs > logs.txt
 
-.PHONY: install seed aws upload pipeline dbt app deploy test start stop ready logs debug generate
+.PHONY: install seed aws upload pipeline dbt app app-check deploy test start stop ready logs debug generate

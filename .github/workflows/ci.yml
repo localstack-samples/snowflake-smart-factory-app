@@ -68,8 +68,13 @@ jobs:
         run: |
           make dbt
 
-      # The Native App (make app) is not deployed: Snowflake Next does not support application packages yet
-      # (CREATE APPLICATION PACKAGE, SHOW APPLICATION PACKAGES)
+      - name: Deploy the Native App
+        run: |
+          make app
+
+      - name: Check the Native App dashboard
+        run: |
+          make app-check
 
       - name: Run tests
         run: |
