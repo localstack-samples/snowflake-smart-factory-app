@@ -323,6 +323,7 @@ try:
         status_counts = health_data['health_status'].value_counts()
         fig = px.pie(values=status_counts.values, 
                     names=status_counts.index, 
+                    color=status_counts.index,
                     title="Health Status Distribution",
                     color_discrete_map={
                         'HEALTHY': '#AC85FA',
@@ -364,7 +365,8 @@ try:
         machine_sensors = sensor_data[sensor_data['machine_id'] == selected_machine].iloc[-1]
         
         # Status indicators
-        status_cols = st.columns(5)  # Changed from 4 to 5 columns
+        # The first column is wider so the longest status, NEEDS_MAINTENANCE, is not cut off
+        status_cols = st.columns([1.6, 1, 1, 1, 1])
         
         # Health Status with color-coded delta
         status_color = {
