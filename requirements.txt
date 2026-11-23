@@ -2,6 +2,7 @@ dbt-core==1.8.0
 dbt-snowflake==1.8.0
 snowflake-snowpark-python
 streamlit
+websockets
 pandas
 numpy
 plotly

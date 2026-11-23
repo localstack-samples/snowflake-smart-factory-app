@@ -87,20 +87,25 @@ This will:
 - Upload sample sensor data (`data/sensor_data_batch_1.csv`)
 - Run dbt transformations to process the data
 
-> [!NOTE]
-> The Native App step does not run on the Snowflake emulator yet: it does not support application packages (`CREATE APPLICATION PACKAGE`, `SHOW APPLICATION PACKAGES`), so `make app` fails and CI skips it. The rest of the sample runs on it.
-
-You can also run the following command to deploy the Native app:
+You can also run the following command to deploy the Native App:
 
 ```bash
 make app
 ```
 
-The output will be similar to the following:
+It creates the application package and installs the app with the Snowflake CLI, then grants the app read access to the tables its dashboard queries (`app/grants.sql`). The dashboard runs as the application, so it sees only what is granted to it. The output will be similar to the following:
 
 ```bash
 [●] Deployed on LocalStack
- └─ URL: https://snowflake.localhost.localstack.cloud:4567/apps/test/test/FACTORY_APP_{USER}/
+ └─ URL: https://snowflake.localhost.localstack.cloud:4567/streamlits/TEST/FACTORY_APP_{USER}/CORE/UI/
+```
+
+`{USER}` is your user name, upper-cased, without characters that cannot appear in an unquoted identifier. The first page load takes a little longer while the emulator starts the app.
+
+To check from the command line that the dashboard renders the pipeline's data, run:
+
+```bash
+make app-check
 ```
 
 The dashboard provides:
